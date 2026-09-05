@@ -1,7 +1,16 @@
 import createLemonade from "./lemonade.js";
+import { SaveControls } from "./saves.js";
+import { GameSurface } from "./layout.js";
+import { AdaptiveSplitter } from "./splitter.js";
+import { setupOffline } from "./offline.js";
+import {
+  readPreference,
+  writePreference,
+  setupVolumes,
+} from "./preferences.js";
+const money = (cents) => `$${(cents / 100).toFixed(2)}`;
 const $ = (id) => document.getElementById(id),
-  canvas = $("game"),
-  context = canvas.getContext("2d", { alpha: false });
+  canvas = $("game");
 const keyboard = $("keyboard"),
   cover = $("cover"),
   status = $("status"),
@@ -9,15 +18,82 @@ const keyboard = $("keyboard"),
 let game,
   running = false,
   active = true,
+  userPaused = false,
   field = null,
   pointer = null,
   consume = false,
   audio = null,
+  masterGain = null,
   nextAudio = 0,
-  muted = false,
+  muted = readPreference("soundMuted", false) === true,
   frames = 0;
 // Track scheduled audio so pause, mute, and quit can stop every queued sample.
 const sources = new Set();
+const surface = new GameSurface(canvas, cancelPointer);
+const splitter = new AdaptiveSplitter(
+  $("adaptive-divider"),
+  $("screen"),
+  layout,
+  cancelPointer,
+);
+const applyVolumes = setupVolumes(() => game);
+let lastPoint = { x: 0, y: 0 },
+  layoutMode = "adaptive",
+  gameState;
+try {
+  layoutMode = localStorage.getItem("gameLayout") || "adaptive";
+} catch {}
+if (!["fill", "fit", "original", "adaptive"].includes(layoutMode))
+  layoutMode = "adaptive";
+$("layout").value = layoutMode;
+$("layout").addEventListener("change", () => {
+  keyboard.blur();
+  layoutMode = $("layout").value;
+  try {
+    localStorage.setItem("gameLayout", layoutMode);
+  } catch {}
+  layout();
+});
+const saves = new SaveControls({
+  game: () => game,
+  running: () => running,
+  sync: syncSaves,
+  close: () => {
+    userPaused = false;
+    refreshActivity();
+    game._lemon_request_quit();
+  },
+});
+let saveRevision = 0,
+  saveSync = Promise.resolve(true);
+$("settings").addEventListener("click", () => {
+  if (game) game._lemon_web_read_state();
+  $("settings-dialog").showModal();
+});
+$("close-settings").addEventListener("click", () =>
+  $("settings-dialog").close(),
+);
+// Overlay visibility is independent of the canvas geometry and pause state.
+function setControlsHidden(hidden, focus = false) {
+  cancelPointer();
+  keyboard.blur();
+  $("controls").hidden = hidden;
+  $("show-controls").hidden = !hidden;
+  $("show-controls").setAttribute("aria-expanded", String(!hidden));
+  document.body.classList.toggle("controls-hidden", hidden);
+  writePreference("controlsHidden", hidden);
+  if (focus)
+    $(hidden ? "show-controls" : "hide-controls").focus({
+      preventScroll: true,
+    });
+}
+$("hide-controls").addEventListener("click", () =>
+  setControlsHidden(true, true),
+);
+$("show-controls").addEventListener("click", () =>
+  setControlsHidden(false, true),
+);
+setControlsHidden(readPreference("controlsHidden", false) === true);
 function stopAudio() {
   for (const source of sources) {
     try {
@@ -28,39 +104,88 @@ function stopAudio() {
   nextAudio = 0;
 }
 function ensureAudio() {
-  if (!audio) audio = new AudioContext();
-  if (!muted && active) audio.resume().catch(() => {});
+  if (!audio) {
+    audio = new AudioContext();
+    masterGain = audio.createGain();
+    masterGain.connect(audio.destination);
+  }
+  masterGain.gain.value = muted ? 0 : 1;
+  if (active) audio.resume().catch(() => {});
 }
 // Keep a short Web Audio queue: enough to absorb rendering jitter without laggy effects.
 function pumpAudio() {
-  if (!audio || audio.state !== "running" || muted || !running) return;
+  if (!audio || audio.state !== "running" || !running) return;
   if (nextAudio < audio.currentTime) nextAudio = audio.currentTime + 0.025;
   for (let i = 0; i < 4 && nextAudio < audio.currentTime + 0.12; i++)
     game._lemon_web_audio(2048);
 }
-// The game always draws 640×480. CSS scales it; input coordinates use the inverse scale.
-// visualViewport shrinks when a mobile software keyboard occupies the screen.
+// The source stays 640×480; the visible canvas composes independently mapped panes.
 function layout() {
-  const height = window.visualViewport?.height || innerHeight;
-  const stageHeight = Math.max(
-    100,
-    height - (document.fullscreenElement ? 0 : 88),
-  );
-  $("stage").style.height = `${stageHeight}px`;
-  const width = Math.min($("stage").clientWidth, (stageHeight * 4) / 3);
-  canvas.style.width = `${width}px`;
-  canvas.style.height = `${(width * 3) / 4}px`;
+  document.body.style.height = `${window.visualViewport?.height || innerHeight}px`;
+  const adaptive =
+    layoutMode === "adaptive" &&
+    running &&
+    gameState?.loaded &&
+    !gameState.modal &&
+    !field;
+  $("stage").classList.toggle("adaptive", adaptive);
+  $("adaptive-hud").hidden = !adaptive;
+  const stage = $("screen");
+  splitter.update(adaptive && active);
+  surface.resize(stage.clientWidth, stage.clientHeight, {
+    mode: adaptive
+      ? "adaptive"
+      : layoutMode === "adaptive"
+        ? "fill"
+        : layoutMode,
+    portrait: innerWidth <= innerHeight,
+    split: splitter.value(stage.clientWidth > stage.clientHeight),
+    field,
+    keyboardOpen: document.activeElement === keyboard,
+  });
   if (!field) return;
-  const box = canvas.getBoundingClientRect(),
-    stage = $("stage").getBoundingClientRect(),
-    scale = box.width / 640;
+  const rect = surface.fieldRect(field);
+  if (!rect) return;
   Object.assign(keyboard.style, {
-    left: `${box.left - stage.left + field.x * scale}px`,
-    top: `${box.top - stage.top + field.y * scale}px`,
-    width: `${field.w * scale}px`,
-    height: `${field.h * scale}px`,
+    left: `${rect.x}px`,
+    top: `${rect.y}px`,
+    width: `${rect.w}px`,
+    height: `${rect.h}px`,
   });
 }
+function cancelPointer() {
+  if (pointer !== null && running && game)
+    game._lemon_touch(lastPoint.x, lastPoint.y, 2);
+  pointer = null;
+}
+function refreshActivity() {
+  active = !document.hidden && !userPaused;
+  if (!active) {
+    cancelPointer();
+    splitter.cancel();
+  }
+  game?._lemon_web_active(active);
+  $("pause").textContent = userPaused ? "▶" : "Ⅱ";
+  $("pause").setAttribute("aria-pressed", String(userPaused));
+  $("pause").setAttribute(
+    "aria-label",
+    userPaused ? "Resume game" : "Pause game",
+  );
+  $("pause").title = userPaused ? "Resume game" : "Pause game";
+  $("paused").hidden = !userPaused || !running;
+  if (!active) {
+    stopAudio();
+    audio?.suspend();
+  } else if (audio) audio.resume().catch(() => {});
+  layout();
+}
+$("pause").addEventListener("click", () => {
+  keyboard.blur();
+  userPaused = !userPaused;
+  refreshActivity();
+});
+keyboard.addEventListener("focus", layout);
+keyboard.addEventListener("blur", layout);
 // Each animation frame gives the translated runtime a bounded slice of main-thread time.
 function step() {
   try {
@@ -87,8 +212,31 @@ try {
   game = await createLemonade({
     printErr: (line) => console.debug(line),
     onAbort: fail,
+    onGameState(state) {
+      const changed =
+        gameState?.loaded !== state.loaded || gameState?.modal !== state.modal;
+      gameState = state;
+      $("stand-cash").textContent = `Cash ${money(state.cash)}`;
+      $("stand-price").textContent = `Price ${money(state.price)} / cup`;
+      if (changed) layout();
+    },
+    onSaveState(state) {
+      saves.update(state);
+      if (state.revision !== saveRevision) {
+        saveRevision = state.revision;
+        if (!state.result)
+          syncSaves().then((ok) => {
+            if (ok && saveRevision === state.revision)
+              $("save-status").textContent =
+                `Checkpoint saved · ${new Date(state.saved * 1000).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}`;
+          });
+        else
+          $("save-status").textContent =
+            "Checkpoint could not be saved. Previous save retained.";
+      }
+    },
     onGameFrame(pixels, w, h) {
-      context.putImageData(new ImageData(pixels, w, h), 0, 0);
+      surface.frame(pixels, w, h);
       frames++;
       canvas.dataset.frames = frames;
       if (running) cover.hidden = true;
@@ -112,6 +260,8 @@ try {
     },
     onGameStopped(failed) {
       running = false;
+      userPaused = false;
+      refreshActivity();
       stopAudio();
       keyboard.blur();
       cover.hidden = false;
@@ -124,22 +274,26 @@ try {
     },
     onGameAudioStop: stopAudio,
     onGameAudio(left, right) {
-      if (!audio || audio.state !== "running" || muted) return;
+      if (!audio || audio.state !== "running") return;
       const buffer = audio.createBuffer(2, left.length, 44100);
       buffer.copyToChannel(left, 0);
       buffer.copyToChannel(right, 1);
       const source = audio.createBufferSource();
       source.buffer = buffer;
-      source.connect(audio.destination);
+      source.connect(masterGain);
       sources.add(source);
       source.onended = () => sources.delete(source);
       source.start(nextAudio);
       nextAudio += left.length / 44100;
     },
   });
+  if (!game._lemon_web_read_state || !game._lemon_audio_levels)
+    throw new Error(
+      "The page needs its matching runtime. Build this checkout with tools/build.py --port web.",
+    );
   // Mount before starting the original program: its first reads must see persisted saves.
   game.FS.mkdir("/saves");
-  game.FS.mount(game.IDBFS, { autoPersist: true }, "/saves");
+  game.FS.mount(game.IDBFS, {}, "/saves");
   try {
     await new Promise((resolve, reject) =>
       game.FS.syncfs(true, (error) => (error ? reject(error) : resolve())),
@@ -150,25 +304,39 @@ try {
     console.warn(error);
   }
   status.textContent = "Your lemonade business is ready.";
+  applyVolumes();
+  updateSoundButton();
+  refreshActivity();
   play.disabled = false;
   layout();
   requestAnimationFrame(step);
+  setupOffline();
+  setInterval(() => game._lemon_web_read_state(), 250);
 } catch (error) {
   fail(error);
 }
 function syncSaves() {
-  if (game)
-    game.FS.syncfs(false, (error) => {
-      if (error) {
-        $("save-status").textContent = "Could not save to browser storage.";
-        console.error(error);
-      }
-    });
+  if (!game) return Promise.resolve(false);
+  saveSync = saveSync.then(
+    () =>
+      new Promise((resolve) => {
+        game.FS.syncfs(false, (error) => {
+          if (error) {
+            $("save-status").textContent = "Could not save to browser storage.";
+            console.error(error);
+          }
+          resolve(!error);
+        });
+      }),
+  );
+  return saveSync;
 }
 // Audio needs a user gesture. Keep the loading cover until the original renderer draws.
 play.addEventListener("click", () => {
   try {
     ensureAudio();
+    userPaused = false;
+    refreshActivity();
     play.disabled = true;
     status.textContent = "Starting the game…";
     if (game._lemon_web_start()) {
@@ -181,13 +349,16 @@ play.addEventListener("click", () => {
 });
 $("sound").addEventListener("click", () => {
   muted = !muted;
-  $("sound").textContent = muted ? "Sound off" : "Sound on";
-  $("sound").setAttribute("aria-pressed", String(muted));
-  if (muted) {
-    stopAudio();
-    audio?.suspend();
-  } else ensureAudio();
+  writePreference("soundMuted", muted);
+  updateSoundButton();
+  ensureAudio();
 });
+function updateSoundButton() {
+  $("sound").textContent = muted ? "♫̸" : "♪";
+  $("sound").setAttribute("aria-label", muted ? "Unmute sound" : "Mute sound");
+  $("sound").title = muted ? "Unmute sound" : "Mute sound";
+  $("sound").setAttribute("aria-pressed", String(muted));
+}
 $("fullscreen").addEventListener("click", async () => {
   try {
     if (document.fullscreenElement) await document.exitFullscreen();
@@ -197,16 +368,13 @@ $("fullscreen").addEventListener("click", async () => {
   }
 });
 $("fullscreen").hidden = !document.fullscreenEnabled;
-function point(event) {
-  const r = canvas.getBoundingClientRect();
-  return {
-    x: ((event.clientX - r.left) * 640) / r.width,
-    y: ((event.clientY - r.top) * 480) / r.height,
-  };
+function point(event, held = false) {
+  return surface.point(event, held);
 }
 function inField(p) {
   return (
     field &&
+    p &&
     p.x >= field.x - 8 &&
     p.x <= field.x + field.w + 8 &&
     p.y >= field.y - 8 &&
@@ -217,15 +385,29 @@ function inField(p) {
 document.addEventListener(
   "pointerdown",
   (event) => {
+    const editing = document.activeElement;
     if (
-      document.activeElement === keyboard &&
+      editing === keyboard &&
       event.target !== keyboard &&
       !inField(point(event))
     ) {
-      keyboard.blur();
+      editing.blur();
       consume = true;
+      consumeClick = true;
       event.preventDefault();
       event.stopPropagation();
+    }
+  },
+  true,
+);
+let consumeClick = false;
+document.addEventListener(
+  "click",
+  (event) => {
+    if (consumeClick) {
+      consumeClick = false;
+      event.preventDefault();
+      event.stopImmediatePropagation();
     }
   },
   true,
@@ -236,6 +418,9 @@ document.addEventListener(
     if (consume) {
       consume = false;
       pointer = null;
+      setTimeout(() => {
+        consumeClick = false;
+      }, 400);
     }
   },
   true,
@@ -243,19 +428,24 @@ document.addEventListener(
 // Flush input inside the tap gesture; deferring focus to a later frame can prevent
 // mobile browsers from opening their software keyboard. Phases: down=0, move=1, up=2.
 canvas.addEventListener("pointerdown", (event) => {
-  if (!running || event.button !== 0) return;
+  if (!running || !active || splitter.drag || event.button !== 0) return;
+  const p = point(event);
+  if (!p) return;
+  surface.begin(event);
+  lastPoint = p;
   event.preventDefault();
   ensureAudio();
   pointer = event.pointerId;
   canvas.setPointerCapture(pointer);
-  const p = point(event);
   game._lemon_touch(p.x, p.y, 0);
   game._lemon_web_flush_input();
   if (inField(p)) keyboard.focus({ preventScroll: true });
 });
 canvas.addEventListener("pointermove", (event) => {
   if (pointer !== event.pointerId || consume) return;
-  const p = point(event);
+  const p = point(event, true);
+  if (!p) return;
+  lastPoint = p;
   game._lemon_touch(
     Math.max(0, Math.min(639, p.x)),
     Math.max(0, Math.min(479, p.y)),
@@ -264,7 +454,9 @@ canvas.addEventListener("pointermove", (event) => {
 });
 function release(event) {
   if (pointer !== event.pointerId || consume) return;
-  const p = point(event);
+  const p = point(event, true);
+  if (!p) return;
+  lastPoint = p;
   game._lemon_touch(
     Math.max(0, Math.min(639, p.x)),
     Math.max(0, Math.min(479, p.y)),
@@ -318,13 +510,8 @@ keyboard.addEventListener("keydown", (event) => {
 });
 // Freeze the guest clock as well as audio, so background time does not advance a day.
 document.addEventListener("visibilitychange", () => {
-  active = !document.hidden;
-  game?._lemon_web_active(active);
-  if (!active) {
-    stopAudio();
-    audio?.suspend();
-    syncSaves();
-  } else if (audio && !muted) audio.resume().catch(() => {});
+  refreshActivity();
+  if (document.hidden) syncSaves();
 });
 window.addEventListener("resize", layout);
 window.visualViewport?.addEventListener("resize", layout);

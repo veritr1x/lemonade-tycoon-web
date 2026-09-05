@@ -15,6 +15,17 @@ static inline CGRect lemon_pane_space(CGRect space, bool bottom) {
   return CGRectMake(space.origin.x, space.origin.y + (bottom ? height + gap : 0), space.size.width,
                     height);
 }
+/* The split is the fraction reserved for the original controls. Keep both
+ * panes reachable, even on small windows. Portrait and widescreen have their
+ * own remembered ratios; missing or invalid preferences use the earlier split. */
+static inline CGFloat lemon_adaptive_split(CGFloat ratio, bool wide) {
+  return isfinite(ratio) ? fmin(.78, fmax(.25, ratio)) : (wide ? .48 : .52);
+}
+static inline CGFloat lemon_adaptive_controls_length(CGFloat available, CGFloat ratio) {
+  available = fmax(0, available);
+  CGFloat minimum = fmin(112, available / 2);
+  return fmin(available - minimum, fmax(minimum, available * ratio));
+}
 static inline CGRect lemon_fit(CGRect source, CGRect space) {
   CGFloat scale =
       fmin(space.size.width / source.size.width, space.size.height / source.size.height);

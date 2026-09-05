@@ -57,6 +57,7 @@ def integration(compiler):
     sources = [
         Path("engine/runtime.c"),
         Path("engine/audio.c"),
+        Path("engine/save.c"),
         Path("engine/lifecycle.c"),
         *sorted(Path("engine/generated").glob("*.c")),
     ]
@@ -92,7 +93,7 @@ def integration(compiler):
         max_workers=min(6, os.cpu_count() or 2)
     ) as pool:
         built = list(pool.map(compile_source, sources))
-    for name in ("configuration", "urls", "restart"):
+    for name in ("configuration", "urls", "restart", "gameplay"):
         run_test(
             compiler, name, [Path(f"engine/tests/{name}.c"), *built], sanitize=False
         )
@@ -126,7 +127,8 @@ if __name__ == "__main__":
         "audio": ["engine/audio.c"],
         "lifecycle": ["engine/lifecycle.c"],
         "runtime_exit": ["engine/runtime.c"],
-        "platform": ["engine/audio.c", "engine/lifecycle.c"],
+        "platform": ["engine/audio.c", "engine/lifecycle.c", "engine/save.c"],
+        "save": ["engine/save.c"],
     }
     for name, sources in cases.items():
         run_test(compiler, name, [f"engine/tests/{name}.c", *sources])

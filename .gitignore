@@ -22,3 +22,9 @@ DerivedData/
 *.xcuserstate
 xcuserdata/
 /ports/ios/build*/
+
+# Personal progress and portable backups stay local on every port.
+Lemonade.dat*
+Lemonade.before-import.dat*
+registry.bin
+*.lemonade-save

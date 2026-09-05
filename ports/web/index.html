@@ -8,39 +8,109 @@
     />
     <meta name="theme-color" content="#07140d" />
     <title>Lemonade Tycoon</title>
-    <link rel="icon" href="data:," />
+    <link rel="icon" href="icon-192.png" />
+    <link rel="apple-touch-icon" href="icon-192.png" />
+    <link rel="manifest" href="manifest.webmanifest" />
     <link rel="stylesheet" href="style.css" />
   </head>
   <body>
-    <header>
-      <strong>Lemonade Tycoon</strong>
-      <nav>
-        <button id="sound" aria-pressed="false">Sound on</button
-        ><button id="fullscreen">Fullscreen</button>
+    <header id="controls">
+      <nav aria-label="Game controls">
+        <button
+          id="sound"
+          aria-pressed="false"
+          aria-label="Mute sound"
+          title="Mute sound"
+        >
+          ♪
+        </button>
+        <button
+          id="pause"
+          aria-pressed="false"
+          aria-label="Pause game"
+          title="Pause game"
+        >
+          Ⅱ
+        </button>
+        <label class="layout-choice"
+          ><span class="sr-only">Game layout</span
+          ><select id="layout" aria-label="Game layout">
+            <option value="adaptive">Adaptive</option>
+            <option value="fill">Fill</option>
+            <option value="fit">Fit</option>
+            <option value="original">Original</option>
+          </select></label
+        >
+        <button
+          id="settings"
+          aria-label="Settings and saves"
+          title="Settings and saves"
+        >
+          ⚙
+        </button>
+        <button id="fullscreen" aria-label="Fullscreen" title="Fullscreen">
+          ⛶
+        </button>
+        <button
+          id="hide-controls"
+          aria-label="Hide controls"
+          title="Hide controls"
+        >
+          ⌃
+        </button>
       </nav>
     </header>
+    <button
+      id="show-controls"
+      aria-label="Show controls"
+      title="Show controls"
+      aria-controls="controls"
+      aria-expanded="false"
+      hidden
+    >
+      ⋯
+    </button>
     <main id="stage">
-      <canvas
-        id="game"
-        width="640"
-        height="480"
-        aria-label="Lemonade Tycoon game"
-      ></canvas
-      ><input
-        id="keyboard"
-        type="text"
-        aria-label="Game text input"
-        autocomplete="off"
-        autocorrect="off"
-        autocapitalize="off"
-        spellcheck="false"
-        hidden
-      />
-      <section id="cover">
-        <h1>Lemonade Tycoon</h1>
-        <p id="status" role="status">Loading the original game…</p>
-        <button id="play" disabled>Play</button>
-      </section>
+      <div id="adaptive-hud" hidden>
+        <strong id="stand-cash"></strong><span id="stand-price"></span>
+      </div>
+      <div id="screen">
+        <canvas
+          id="game"
+          width="640"
+          height="480"
+          aria-label="Lemonade Tycoon game"
+        ></canvas
+        ><input
+          id="keyboard"
+          type="text"
+          aria-label="Game text input"
+          autocomplete="off"
+          autocorrect="off"
+          autocapitalize="off"
+          spellcheck="false"
+          hidden
+        />
+        <div
+          id="adaptive-divider"
+          role="separator"
+          tabindex="0"
+          aria-label="Resize game panes"
+          aria-controls="game"
+          aria-orientation="horizontal"
+          aria-valuemin="25"
+          aria-valuemax="78"
+          aria-valuenow="52"
+          title="Drag to resize. Double-click to reset."
+          hidden
+        ></div>
+        <section id="cover">
+          <h1>Lemonade Tycoon</h1>
+          <p id="status" role="status">Loading the original game…</p>
+          <button id="play" disabled>Play</button>
+        </section>
+        <div id="paused" hidden role="status">Paused</div>
+      </div>
     </main>
     <footer>
       <span id="save-status">Saves stay in this browser.</span
@@ -49,5 +119,50 @@
       >
     </footer>
     <script type="module" src="app.js"></script>
+    <dialog id="settings-dialog" aria-labelledby="settings-title">
+      <div class="dialog-heading">
+        <h2 id="settings-title">Settings & saves</h2>
+        <button id="close-settings">Done</button>
+      </div>
+      <section>
+        <h3>Audio</h3>
+        <label class="volume"
+          >Music & ambience <output id="musicVolume-value">100%</output
+          ><input id="musicVolume" type="range" min="0" max="100" value="100"
+        /></label>
+        <label class="volume"
+          >Sound effects <output id="effectsVolume-value">100%</output
+          ><input id="effectsVolume" type="range" min="0" max="100" value="100"
+        /></label>
+      </section>
+      <section>
+        <h3>Offline play</h3>
+        <p id="offline-status" role="status">Preparing offline play…</p>
+        <button id="install-app" hidden>Install app</button>
+        <p>
+          Use your browser's Install app option, or Share → Add to Home Screen
+          on iPhone and iPad.
+        </p>
+      </section>
+      <section id="save-controls">
+        <h3>Save transfers</h3>
+        <p>
+          Move all careers between the web, iPhone, and iPad. Exports include
+          the latest normal checkpoint. An unfinished selling day is not
+          included.
+        </p>
+        <p id="transfer-status" role="status"></p>
+        <button data-export="0">Export latest save</button>
+        <button data-export="1">Export previous backup</button>
+        <button data-export="2">Export pre-import backup</button>
+        <button id="import-save">Import save</button>
+        <button id="close-game">Close game to import</button>
+        <input type="file" id="import-file" accept=".lemonade-save" hidden />
+        <p>
+          Each completed save keeps the previous checkpoint. Imports preserve a
+          separate copy of your current save.
+        </p>
+      </section>
+    </dialog>
   </body>
 </html>

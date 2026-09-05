@@ -39,6 +39,24 @@ int main(void) {
   lemon_audio_free(sample);
   assert(!lemon_audio_playing(ch));
   lemon_audio_close();
+  assert(lemon_audio_initialize(4));
+  uint8_t tone[] = {64, 64, 64, 64, 64, 64, 64, 64};
+  sample = lemon_audio_load(tone, sizeof(tone), 8 | 32);
+  int music = lemon_audio_play(-1, sample, 0);
+  lemon_audio_control(music, 3, 2);
+  int effect = lemon_audio_play(-1, sample, 0);
+  lemon_audio_levels(0, 1);
+  lemon_audio_render(l, r, 2, 44100);
+  near(l[0], .5);
+  lemon_audio_levels(.5, 0);
+  lemon_audio_render(l, r, 2, 44100);
+  near(l[0], .25);
+  lemon_audio_levels(0, 0);
+  lemon_audio_render(l, r, 2, 44100);
+  near(l[0], 0);
+  assert(lemon_audio_playing(music) && lemon_audio_playing(effect));
+  lemon_audio_levels(1, 1);
+  lemon_audio_close();
   puts("PASS: unsigned PCM, pause/resume, end-of-sample, stereo output, looping, resampling, mute, "
-       "free while playing");
+       "free while playing, independent music/ambience and effects levels");
 }

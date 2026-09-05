@@ -39,12 +39,16 @@ With Clang installed:
 
 ```sh
 python3 tools/test.py                # Fast tests with address/undefined sanitizers
-python3 tools/test.py --integration  # Original startup, configuration, URLs, restart
+python3 tools/test.py --integration  # Original controls, day start, save/restart
+node --test ports/web/tests/*.test.mjs # Layout and pointer mapping
 ```
 
 After browser changes, try the [manual checklist](docs/testing.md). For engine
 changes, build the browser module too; a native C test alone cannot verify WebAssembly.
 Tests write diagnostics under `build/tests/` and use disposable save directories.
+For offline testing, build the web port and use `python3 tools/serve.py --built`.
+The [modernization guide](docs/modernization.md) maps the interface, save, and audio
+modules to common contribution tasks.
 For iOS changes, run `python3 tools/test_ios.py` on macOS and follow the
 [simulator and device checks](ports/ios/README.md#implementation-and-checks).
 

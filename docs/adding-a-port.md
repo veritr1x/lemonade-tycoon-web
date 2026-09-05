@@ -7,7 +7,8 @@ instead of copying them into each port. Generated game code remains under
 
 1. Add a host adapter and a short README under `ports/<name>/`. Implement the frame,
    dialog, text input, URL, audio, storage, and lifecycle boundaries declared in
-   `engine/platform.h` and `engine/audio.h`. Native hosts can follow the iOS worker
+   `engine/platform.h` and `engine/audio.h`. Use `engine/game.h` for copied HUD state
+   and `engine/save.h` for compatible backups and transfers. Native hosts can follow the iOS worker
    thread model; event-loop hosts can follow the web adapter's bounded stepping.
 2. Add `tools/build_<name>.py` and register it in `BUILDERS` in `tools/build.py`.
    Contributors should build with `python3 tools/build.py --port <name>` and inspect

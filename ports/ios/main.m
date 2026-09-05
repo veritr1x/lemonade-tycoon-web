@@ -3,11 +3,15 @@
 #import "../../engine/audio.h"
 #import "../../engine/platform.h"
 #import "GameView.h"
+#import "SettingsController.h"
+#import "DashboardView.h"
+#import "../../engine/save.h"
 
 typedef NS_ENUM(NSInteger, LemonLayoutMode) {
   LemonLayoutFill,
   LemonLayoutFit,
   LemonLayoutOriginal,
+  LemonLayoutAdaptive,
 };
 
 // UIKit and AVAudioEngine state is confined to the main thread.
@@ -96,6 +100,12 @@ void lemon_audio_stop(void) {
 @property(nonatomic) BOOL running;
 @property(nonatomic, strong) UIStackView *toolbar;
 @property(nonatomic, strong) UIButton *pauseButton, *soundButton, *layoutButton;
+@property(nonatomic, strong) UIVisualEffectView *toolbarBackdrop;
+@property(nonatomic, strong) UIButton *hideControlsButton, *showControlsButton;
+@property(nonatomic, strong) LemonDashboardView *dashboard;
+@property(nonatomic, strong) NSTimer *hostTimer;
+@property(nonatomic, strong) UILabel *saveNotice;
+@property(nonatomic) unsigned lastSaveRevision;
 @property(nonatomic, strong) NSArray<NSLayoutConstraint *> *portraitConstraints, *wideConstraints;
 - (void)refreshHostActivity;
 @end
@@ -154,7 +164,9 @@ static void presentFrame(const uint32_t *rgb, unsigned width, unsigned height) {
       CGImageRef cg = CGImageCreate(640, 480, 8, 32, 640 * 4, colors,
                                     kCGBitmapByteOrder32Little | kCGImageAlphaNoneSkipFirst,
                                     provider, NULL, NO, kCGRenderingIntentDefault);
-      controller.game.frameImage = [UIImage imageWithCGImage:cg];
+      UIImage *image = [UIImage imageWithCGImage:cg];
+      controller.game.frameImage = image;
+      controller.dashboard.frameImage = image;
       CGImageRelease(cg);
       CGColorSpaceRelease(colors);
       CGDataProviderRelease(provider);
@@ -238,6 +250,7 @@ static int presentDialog(const char *title, const char *body, int trial, char *n
   else
     [audioEngine pause];
   self.game.userInteractionEnabled = self.running && !userPaused;
+  self.dashboard.userInteractionEnabled = self.running && !userPaused;
   self.pauseButton.accessibilityLabel = userPaused ? @"Resume game" : @"Pause game";
   self.pauseButton.toolTip = self.pauseButton.accessibilityLabel;
   UIButtonConfiguration *style = self.pauseButton.configuration;
@@ -245,14 +258,55 @@ static int presentDialog(const char *title, const char *body, int trial, char *n
   self.pauseButton.configuration = style;
 }
 - (void)togglePause {
+  [self.dashboard cancelGameTouch];
   [self.game cancelGameTouch];
   [self.game resignFirstResponder];
   userPaused = !userPaused;
+  if ([NSUserDefaults.standardUserDefaults boolForKey:@"hapticsEnabled"])
+    [[UISelectionFeedbackGenerator new] selectionChanged];
   [self refreshHostActivity];
   UIAccessibilityPostNotification(UIAccessibilityAnnouncementNotification,
                                   userPaused ? @"Game paused" : @"Game resumed");
 }
+- (void)setControlsHidden:(BOOL)hidden {
+  [self.dashboard cancelGameTouch];
+  [self.game cancelGameTouch];
+  [self.game resignFirstResponder];
+  [NSUserDefaults.standardUserDefaults setBool:hidden forKey:@"controlsHidden"];
+  self.toolbar.hidden = hidden;
+  self.toolbarBackdrop.hidden = hidden;
+  self.showControlsButton.hidden = !hidden;
+  UIAccessibilityPostNotification(UIAccessibilityLayoutChangedNotification,
+                                  hidden ? self.showControlsButton : self.hideControlsButton);
+}
+- (void)hideControls {
+  [self setControlsHidden:YES];
+}
+- (void)showControls {
+  [self setControlsHidden:NO];
+}
+- (void)showSettings {
+  [self.dashboard cancelGameTouch];
+  [self.game cancelGameTouch];
+  [self.game resignFirstResponder];
+  LemonSettingsController *settings = [LemonSettingsController new];
+  __weak LemonController *weakSelf = self;
+  settings.isGameRunning = ^BOOL {
+    return weakSelf.running;
+  };
+  settings.closeGame = ^{
+    userPaused = NO;
+    [weakSelf refreshHostActivity];
+    lemon_request_quit();
+  };
+  UINavigationController *sheet =
+      [[UINavigationController alloc] initWithRootViewController:settings];
+  sheet.overrideUserInterfaceStyle = UIUserInterfaceStyleDark;
+  sheet.sheetPresentationController.detents = @[ UISheetPresentationControllerDetent.largeDetent ];
+  [self presentViewController:sheet animated:YES completion:nil];
+}
 - (void)toggleSound {
+  [self.dashboard cancelGameTouch];
   [self.game resignFirstResponder];
   userMuted = !userMuted;
   [NSUserDefaults.standardUserDefaults setBool:userMuted forKey:@"soundMuted"];
@@ -265,10 +319,13 @@ static int presentDialog(const char *title, const char *body, int trial, char *n
   self.soundButton.toolTip = self.soundButton.accessibilityLabel;
 }
 - (LemonLayoutMode)gameLayoutMode {
+  if (![NSUserDefaults.standardUserDefaults objectForKey:@"gameLayout"])
+    return LemonLayoutAdaptive;
   NSInteger mode = [NSUserDefaults.standardUserDefaults integerForKey:@"gameLayout"];
-  return mode >= LemonLayoutFill && mode <= LemonLayoutOriginal ? mode : LemonLayoutFill;
+  return mode >= LemonLayoutFill && mode <= LemonLayoutAdaptive ? mode : LemonLayoutAdaptive;
 }
 - (void)selectGameLayout:(LemonLayoutMode)mode {
+  [self.dashboard cancelGameTouch];
   [self.game cancelGameTouch];
   [self.game resignFirstResponder];
   [NSUserDefaults.standardUserDefaults setInteger:mode forKey:@"gameLayout"];
@@ -278,11 +335,12 @@ static int presentDialog(const char *title, const char *body, int trial, char *n
                                   self.layoutButton.accessibilityValue);
 }
 - (void)updateLayoutMenu {
-  NSArray<NSString *> *titles = @[ @"Fill screen", @"Keep proportions", @"Original layout" ];
+  NSArray<NSString *> *titles =
+      @[ @"Fill screen", @"Keep proportions", @"Original layout", @"Adaptive interface" ];
   NSMutableArray<UIAction *> *actions = [NSMutableArray new];
   LemonLayoutMode selected = [self gameLayoutMode];
   __weak LemonController *weakSelf = self;
-  for (LemonLayoutMode mode = LemonLayoutFill; mode <= LemonLayoutOriginal; mode++) {
+  for (LemonLayoutMode mode = LemonLayoutFill; mode <= LemonLayoutAdaptive; mode++) {
     UIAction *action = [UIAction actionWithTitle:titles[mode]
                                            image:nil
                                       identifier:nil
@@ -292,6 +350,12 @@ static int presentDialog(const char *title, const char *body, int trial, char *n
     action.state = mode == selected ? UIMenuElementStateOn : UIMenuElementStateOff;
     [actions addObject:action];
   }
+  [actions addObject:[UIAction actionWithTitle:@"Settings & saves"
+                                         image:[UIImage systemImageNamed:@"gearshape"]
+                                    identifier:nil
+                                       handler:^(UIAction *sender) {
+                                         [weakSelf showSettings];
+                                       }]];
   self.layoutButton.menu = [UIMenu menuWithTitle:@"" children:actions];
   self.layoutButton.accessibilityValue = titles[selected];
 }
@@ -305,13 +369,19 @@ static int presentDialog(const char *title, const char *body, int trial, char *n
   NSArray *inactive = wide ? self.portraitConstraints : self.wideConstraints;
   if (!((NSLayoutConstraint *)active.firstObject).active) {
     [NSLayoutConstraint deactivateConstraints:inactive];
-    // No title or text-size-dependent header competes with the game. Portrait
-    // gets one compact row; widescreen gets a narrow rail beside the full frame.
+    // The toolbar floats above the game; rotating or hiding it never resizes
+    // the play area. Only its own row/rail constraints change.
     self.toolbar.axis = wide ? UILayoutConstraintAxisVertical : UILayoutConstraintAxisHorizontal;
     self.toolbar.spacing = wide ? 4 : 8;
     [NSLayoutConstraint activateConstraints:active];
   }
   LemonLayoutMode mode = [self gameLayoutMode];
+  LemonGameState state;
+  lemon_game_state(&state);
+  BOOL adaptive = self.running && mode == LemonLayoutAdaptive && state.loaded &&
+                  !state.modal_open && !self.game.textActive;
+  self.dashboard.hidden = !adaptive;
+  self.game.hidden = !self.running || adaptive;
   BOOL panels = !wide && mode != LemonLayoutOriginal;
   if (self.game.portraitPanels != panels)
     self.game.portraitPanels = panels;
@@ -327,37 +397,98 @@ static int presentDialog(const char *title, const char *body, int trial, char *n
   self.game = [[LemonView alloc] initWithFrame:self.view.bounds];
   self.game.translatesAutoresizingMaskIntoConstraints = NO;
   [self.view addSubview:self.game];
+  self.dashboard = [LemonDashboardView new];
+  self.dashboard.translatesAutoresizingMaskIntoConstraints = NO;
+  __weak LemonController *weakSelf = self;
+  [self.view addSubview:self.dashboard];
+  [NSLayoutConstraint activateConstraints:@[
+    [self.dashboard.topAnchor constraintEqualToAnchor:self.game.topAnchor],
+    [self.dashboard.bottomAnchor constraintEqualToAnchor:self.game.bottomAnchor],
+    [self.dashboard.leadingAnchor constraintEqualToAnchor:self.game.leadingAnchor],
+    [self.dashboard.trailingAnchor constraintEqualToAnchor:self.game.trailingAnchor]
+  ]];
   self.soundButton = [self button:userMuted ? @"speaker.slash.fill" : @"speaker.wave.2.fill"
                             label:userMuted ? @"Unmute sound" : @"Mute sound"
                            action:@selector(toggleSound)];
   self.pauseButton = [self button:@"pause.fill" label:@"Pause game" action:@selector(togglePause)];
   self.layoutButton = [self button:@"rectangle.split.1x2" label:@"Game layout" action:NULL];
   self.layoutButton.showsMenuAsPrimaryAction = YES;
+  self.hideControlsButton = [self button:@"eye.slash"
+                                   label:@"Hide controls"
+                                  action:@selector(hideControls)];
+  self.showControlsButton = [self button:@"ellipsis"
+                                   label:@"Show controls"
+                                  action:@selector(showControls)];
+  self.showControlsButton.translatesAutoresizingMaskIntoConstraints = NO;
+  self.showControlsButton.backgroundColor =
+      [UIColor.secondarySystemBackgroundColor colorWithAlphaComponent:.85];
+  self.showControlsButton.layer.cornerRadius = 24;
+  self.showControlsButton.clipsToBounds = YES;
   [self updateLayoutMenu];
-  self.toolbar = [[UIStackView alloc]
-      initWithArrangedSubviews:@[ self.soundButton, self.pauseButton, self.layoutButton ]];
+  self.toolbar = [[UIStackView alloc] initWithArrangedSubviews:@[
+    self.soundButton, self.pauseButton, self.layoutButton, self.hideControlsButton
+  ]];
   self.toolbar.alignment = UIStackViewAlignmentCenter;
   self.toolbar.spacing = 8;
   self.toolbar.translatesAutoresizingMaskIntoConstraints = NO;
-  [self.view addSubview:self.toolbar];
+  self.toolbarBackdrop = [[UIVisualEffectView alloc]
+      initWithEffect:[UIBlurEffect effectWithStyle:UIBlurEffectStyleSystemChromeMaterialDark]];
+  self.toolbarBackdrop.translatesAutoresizingMaskIntoConstraints = NO;
+  self.toolbarBackdrop.layer.cornerRadius = 20;
+  self.toolbarBackdrop.clipsToBounds = YES;
+  [self.toolbarBackdrop.contentView addSubview:self.toolbar];
+  [self.view addSubview:self.toolbarBackdrop];
+  [self.view addSubview:self.showControlsButton];
   UILayoutGuide *safe = self.view.safeAreaLayoutGuide;
+  // iPhone needs breathing room around its camera and home indicator. The
+  // border belongs to the game frame, so toolbar visibility never changes it.
+  BOOL phone = self.traitCollection.userInterfaceIdiom == UIUserInterfaceIdiomPhone;
+  CGFloat border = phone ? 8 : 0;
+  self.view.keyboardLayoutGuide.usesBottomSafeArea = phone;
+  for (UIView *surface in @[ self.game, self.dashboard ]) {
+    surface.layer.cornerRadius = phone ? 10 : 0;
+    surface.layer.borderWidth = phone ? 1 : 0;
+    surface.layer.borderColor = [UIColor colorWithWhite:.2 alpha:1].CGColor;
+    surface.clipsToBounds = YES;
+  }
   [NSLayoutConstraint activateConstraints:@[
-    [self.game.leadingAnchor constraintEqualToAnchor:safe.leadingAnchor],
-    [self.game.bottomAnchor constraintEqualToAnchor:self.view.keyboardLayoutGuide.topAnchor],
-    [self.toolbar.trailingAnchor constraintEqualToAnchor:safe.trailingAnchor constant:-8]
+    [self.game.leadingAnchor
+        constraintEqualToAnchor:phone ? safe.leadingAnchor : self.view.leadingAnchor
+                       constant:border],
+    [self.game.trailingAnchor
+        constraintEqualToAnchor:phone ? safe.trailingAnchor : self.view.trailingAnchor
+                       constant:-border],
+    [self.game.topAnchor constraintEqualToAnchor:phone ? safe.topAnchor : self.view.topAnchor
+                                        constant:border],
+    [self.game.bottomAnchor constraintEqualToAnchor:self.view.keyboardLayoutGuide.topAnchor
+                                           constant:-border],
+    [self.toolbar.leadingAnchor
+        constraintEqualToAnchor:self.toolbarBackdrop.contentView.leadingAnchor
+                       constant:6],
+    [self.toolbar.trailingAnchor
+        constraintEqualToAnchor:self.toolbarBackdrop.contentView.trailingAnchor
+                       constant:-6],
+    [self.toolbar.topAnchor constraintEqualToAnchor:self.toolbarBackdrop.contentView.topAnchor
+                                           constant:6],
+    [self.toolbar.bottomAnchor constraintEqualToAnchor:self.toolbarBackdrop.contentView.bottomAnchor
+                                              constant:-6],
+    [self.toolbarBackdrop.trailingAnchor constraintEqualToAnchor:safe.trailingAnchor constant:-8],
+    [self.showControlsButton.trailingAnchor constraintEqualToAnchor:safe.trailingAnchor
+                                                           constant:-8],
+    [self.showControlsButton.topAnchor constraintEqualToAnchor:safe.topAnchor constant:8],
+    [self.showControlsButton.heightAnchor constraintEqualToConstant:48]
   ]];
   self.portraitConstraints = @[
-    [self.toolbar.topAnchor constraintEqualToAnchor:safe.topAnchor constant:4],
-    [self.toolbar.heightAnchor constraintEqualToConstant:48],
-    [self.game.topAnchor constraintEqualToAnchor:self.toolbar.bottomAnchor constant:4],
-    [self.game.trailingAnchor constraintEqualToAnchor:safe.trailingAnchor]
+    [self.toolbarBackdrop.topAnchor constraintEqualToAnchor:safe.topAnchor constant:8],
+    [self.toolbar.heightAnchor constraintEqualToConstant:48]
   ];
   self.wideConstraints = @[
-    [self.toolbar.centerYAnchor constraintEqualToAnchor:self.game.centerYAnchor],
-    [self.toolbar.widthAnchor constraintEqualToConstant:48],
-    [self.game.topAnchor constraintEqualToAnchor:safe.topAnchor],
-    [self.game.trailingAnchor constraintEqualToAnchor:self.toolbar.leadingAnchor constant:-8]
+    [self.toolbarBackdrop.centerYAnchor constraintEqualToAnchor:safe.centerYAnchor],
+    [self.toolbar.widthAnchor constraintEqualToConstant:48]
   ];
+  BOOL controlsHidden = [NSUserDefaults.standardUserDefaults boolForKey:@"controlsHidden"];
+  self.toolbar.hidden = self.toolbarBackdrop.hidden = controlsHidden;
+  self.showControlsButton.hidden = !controlsHidden;
   [self updateGameLayout];
   self.status = [UILabel new];
   self.status.translatesAutoresizingMaskIntoConstraints = NO;
@@ -386,6 +517,55 @@ static int presentDialog(const char *title, const char *body, int trial, char *n
     [self.restart.widthAnchor constraintGreaterThanOrEqualToConstant:120]
   ]];
   [self startGame];
+  self.saveNotice = [UILabel new];
+  self.saveNotice.translatesAutoresizingMaskIntoConstraints = NO;
+  self.saveNotice.font = [UIFont preferredFontForTextStyle:UIFontTextStyleCaption1];
+  self.saveNotice.adjustsFontForContentSizeCategory = YES;
+  self.saveNotice.numberOfLines = 0;
+  self.saveNotice.backgroundColor =
+      [UIColor.secondarySystemBackgroundColor colorWithAlphaComponent:.95];
+  self.saveNotice.textAlignment = NSTextAlignmentCenter;
+  self.saveNotice.alpha = 0;
+  self.saveNotice.layer.cornerRadius = 8;
+  self.saveNotice.clipsToBounds = YES;
+  self.saveNotice.userInteractionEnabled = NO;
+  [self.view addSubview:self.saveNotice];
+  [NSLayoutConstraint activateConstraints:@[
+    [self.saveNotice.leadingAnchor constraintEqualToAnchor:self.game.leadingAnchor constant:12],
+    [self.saveNotice.bottomAnchor constraintEqualToAnchor:self.game.bottomAnchor constant:-8],
+    [self.saveNotice.widthAnchor constraintLessThanOrEqualToAnchor:self.game.widthAnchor
+                                                          constant:-24],
+    [self.saveNotice.heightAnchor constraintGreaterThanOrEqualToConstant:32]
+  ]];
+  self.hostTimer = [NSTimer scheduledTimerWithTimeInterval:.25
+                                                   repeats:YES
+                                                     block:^(NSTimer *timer) {
+                                                       LemonGameState state;
+                                                       lemon_game_state(&state);
+                                                       [weakSelf.dashboard refresh:state];
+                                                       [weakSelf updateGameLayout];
+                                                       [weakSelf updateSaveFeedback];
+                                                     }];
+}
+- (void)updateSaveFeedback {
+  NSString *directory =
+      NSSearchPathForDirectoriesInDomains(NSDocumentDirectory, NSUserDomainMask, YES).firstObject;
+  LemonSaveStatus saved;
+  lemon_save_status(directory.UTF8String, &saved);
+  if (saved.revision == self.lastSaveRevision)
+    return;
+  self.lastSaveRevision = saved.revision;
+  self.saveNotice.text =
+      saved.result ? @"  Checkpoint failed. Previous save retained.  " : @"  Checkpoint saved  ";
+  self.saveNotice.alpha = 1;
+  unsigned revision = saved.revision;
+  dispatch_after(dispatch_time(DISPATCH_TIME_NOW, 3 * NSEC_PER_SEC), dispatch_get_main_queue(), ^{
+    if (self.lastSaveRevision == revision)
+      [UIView animateWithDuration:.3
+                       animations:^{
+                         self.saveNotice.alpha = 0;
+                       }];
+  });
 }
 - (void)startGame {
   // One engine run owns its guest memory. Clean shutdown permits another run with saved data.
@@ -422,6 +602,9 @@ static int presentDialog(const char *title, const char *body, int trial, char *n
     });
   });
 }
+- (BOOL)prefersHomeIndicatorAutoHidden {
+  return YES;
+}
 - (BOOL)prefersStatusBarHidden {
   return YES;
 }
@@ -443,6 +626,10 @@ static int presentDialog(const char *title, const char *body, int trial, char *n
                                              name:AVAudioEngineConfigurationChangeNotification
                                            object:nil];
   frameLock = [NSLock new];
+  [NSUserDefaults.standardUserDefaults
+      registerDefaults:@{@"musicVolume" : @1, @"effectsVolume" : @1, @"hapticsEnabled" : @NO}];
+  lemon_audio_levels([NSUserDefaults.standardUserDefaults floatForKey:@"musicVolume"],
+                     [NSUserDefaults.standardUserDefaults floatForKey:@"effectsVolume"]);
   userMuted = [NSUserDefaults.standardUserDefaults boolForKey:@"soundMuted"];
   self.window = [[UIWindow alloc] initWithFrame:UIScreen.mainScreen.bounds];
   self.window.rootViewController = [LemonController new];
@@ -456,6 +643,7 @@ static int presentDialog(const char *title, const char *body, int trial, char *n
 - (void)applicationWillResignActive:(UIApplication *)app {
   // Pause at the engine's cooperative boundary and exclude inactive time from its clock.
   appActive = NO;
+  [controller.dashboard cancelGameTouch];
   [controller.game cancelGameTouch];
   [controller refreshHostActivity];
   [AVAudioSession.sharedInstance setActive:NO

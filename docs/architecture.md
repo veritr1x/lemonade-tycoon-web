@@ -55,7 +55,8 @@ The lifecycle clock excludes background time; resuming a tab does not jump ahead
 ## Pixels and input
 
 The host converts packed RGB words to a fresh RGBA byte array for `ImageData`.
-Canvas CSS size preserves 4:3; pointer coordinates are scaled back to 640×480.
+`ports/web/layout.js` composes the original surface into full-frame, portrait, or
+adaptive panes. Painting and pointer input share a plan of source/display rectangles.
 The pointer adapter sends original window messages with down/move/up phases.
 
 Hooks at the original text editor's activation/deactivation addresses update a
@@ -70,13 +71,19 @@ and a redraw within a bounded gesture update so first focus can happen during a 
 `engine/audio.c` implements the reached FMOD sample calls. It mixes samples into
 stereo float buffers, including volume, pause, mute, looping, and resampling.
 The browser copies them into Web Audio buffers at 44.1 kHz and queues about 120 ms.
-Audio starts after a user gesture and is stopped on pause, mute, or quit.
+Audio starts after a user gesture and is stopped on pause or quit. A master gain
+mutes output while the mixer continues advancing. Host music/ambience and effects
+levels multiply the original channel volume.
 
 Before startup, the page mounts IDBFS at `/saves` and loads IndexedDB contents.
 The original `Lemonade.dat` and the adapter's `registry.bin` keep their formats.
-IDBFS persists writes automatically, with explicit synchronization on backgrounding
-and exit. This persists the game's existing save points; it does not create a
+The save adapter commits writes atomically and retains the previous checkpoint.
+IDBFS synchronizes completed checkpoints, backgrounding, and exit. This persists
+the game's existing save points; it does not create a
 mid-day snapshot. Storage is local to the site's browser origin, not an account.
+
+The shared game-state boundary, portable save format, adaptive UI, and offline
+cache lifecycle are described in [Modern interface and saves](modernization.md).
 
 ## Build and publishing
 

@@ -11,7 +11,20 @@ import subprocess
 
 ROOT = Path(__file__).resolve().parent.parent
 VERSION = "6.0.9"
-SHELL_FILES = ("index.html", "app.js", "style.css")
+HOST_API = 4
+SHELL_FILES = (
+    "index.html",
+    "app.js",
+    "style.css",
+    "saves.js",
+    "layout.js",
+    "splitter.js",
+    "offline.js",
+    "preferences.js",
+    "manifest.webmanifest",
+    "icon-192.png",
+    "icon-512.png",
+)
 RUNTIME_FILES = ("lemonade.js", "lemonade.wasm", "lemonade.data")
 
 
@@ -39,6 +52,7 @@ def build(jobs):
     sources = [
         Path("engine/runtime.c"),
         Path("engine/audio.c"),
+        Path("engine/save.c"),
         Path("engine/lifecycle.c"),
         *sorted(Path("engine/generated").glob("*.c")),
         # host.c includes platform.c so it can drive the shared engine lifecycle.
@@ -78,6 +92,11 @@ def build(jobs):
         "_lemon_web_active",
         "_lemon_web_flush_input",
         "_lemon_web_audio",
+        "_lemon_web_read_state",
+        "_lemon_web_export",
+        "_lemon_web_import",
+        "_lemon_request_quit",
+        "_lemon_audio_levels",
         "_lemon_touch",
         "_lemon_key",
     ]
@@ -131,11 +150,21 @@ def build(jobs):
         ["git", "rev-parse", "HEAD"], capture_output=True, text=True
     )
     manifest = {
+        "host_api": HOST_API,
         "revision": revision.stdout.strip() or "local",
         "emscripten": VERSION,
         "files": {name: sha256(output / name) for name in RUNTIME_FILES},
     }
     (output / "build.json").write_text(json.dumps(manifest, indent=2) + "\n")
+    worker = (ROOT / "ports/web/sw.js").read_text()
+    files = {name: sha256(output / name) for name in (*SHELL_FILES, *RUNTIME_FILES)}
+    version = hashlib.sha256(
+        (worker + json.dumps(files, sort_keys=True)).encode()
+    ).hexdigest()[:20]
+    precache = {"version": version, "files": files}
+    (output / "sw.js").write_text(
+        worker.replace("/* @build */ null", json.dumps(precache))
+    )
     print(f"Built {output}")
 
 

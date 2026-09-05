@@ -45,8 +45,29 @@ EM_JS(void, web_pcm, (float *left, float *right, unsigned count), {
 EM_JS(void, web_message, (const char *title, const char *body), {
   alert(UTF8ToString(title) + '\n\n' + UTF8ToString(body));
 });
+EM_JS(void, web_state, (int loaded, int editable, int modal, int cash, int price), {
+  Module['onGameState']({loaded:!!loaded, canManage:!!editable, modal:!!modal, cash, price});
+});
+EM_JS(void, web_save_state, (unsigned revision, int result, int available, double saved), {
+  Module['onSaveState']({revision,result,available,saved});
+});
 // clang-format on
 
+EMSCRIPTEN_KEEPALIVE void lemon_web_read_state(void) {
+  LemonGameState s;
+  lemon_game_state(&s);
+  web_state(s.loaded, s.can_manage, s.modal_open, s.cash_cents, s.price_cents);
+  LemonSaveStatus saves;
+  lemon_save_status("/saves", &saves);
+  web_save_state(saves.revision, saves.result, saves.available, saves.saved_at);
+}
+EMSCRIPTEN_KEEPALIVE int lemon_web_export(unsigned source) {
+  return lemon_save_export("/saves", "/transfer.lemonade-save", source);
+}
+EMSCRIPTEN_KEEPALIVE int lemon_web_import(int validate_only) {
+  return validate_only ? lemon_save_validate("/import.lemonade-save")
+                       : lemon_save_import("/saves", "/import.lemonade-save");
+}
 static int web_dialog(const char *title, const char *body, int trial, char *name, char *code) {
   web_message(title, body);
   return 2; /* Win32 IDCANCEL: close an OS-level error dialog. */

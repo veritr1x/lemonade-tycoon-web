@@ -11,4 +11,7 @@ int lemon_audio_play(int channel, uint32_t sample, int paused);
 int lemon_audio_control(int channel, int property, int value);
 int lemon_audio_playing(int channel);
 void lemon_audio_render(float *left, float *right, unsigned frames, double rate);
+/* Host levels multiply original per-channel volume. Looping background tracks
+ * use music/ambience; one-shot sounds use effects. Values are clamped to 0..1. */
+void lemon_audio_levels(float music, float effects);
 #endif

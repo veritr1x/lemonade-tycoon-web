@@ -21,6 +21,13 @@ static Channel channels[MAX_CHANNELS];
 static unsigned channel_limit = 32;
 static int initialized;
 static pthread_mutex_t lock = PTHREAD_MUTEX_INITIALIZER;
+static float music_level = 1, effects_level = 1;
+void lemon_audio_levels(float music, float effects) {
+  pthread_mutex_lock(&lock);
+  music_level = isfinite(music) ? fmaxf(0, fminf(1, music)) : 0;
+  effects_level = isfinite(effects) ? fmaxf(0, fminf(1, effects)) : 0;
+  pthread_mutex_unlock(&lock);
+}
 __attribute__((weak)) int lemon_audio_start(void) { return 0; }
 __attribute__((weak)) void lemon_audio_stop(void) {}
 int lemon_audio_initialize(unsigned count) {
@@ -190,6 +197,7 @@ void lemon_audio_render(float *left, float *right, unsigned frames, double rate)
       }
       unsigned a = c->position, b = a + 1 < s->frames ? a + 1 : ((c->loop & 2) ? 0 : a);
       float t = c->position - a, v = c->mute ? 0 : c->volume;
+      v *= c->loop ? music_level : effects_level;
       float l = s->data[a * s->channels] * (1 - t) + s->data[b * s->channels] * t,
             r = s->channels == 1 ? l : s->data[a * 2 + 1] * (1 - t) + s->data[b * 2 + 1] * t;
       left[frame] += l * v;

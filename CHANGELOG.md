@@ -5,7 +5,39 @@ User-visible changes are grouped by port. iOS build numbers match the app's
 
 ## Unreleased
 
-No changes yet.
+### iOS and web (local preview)
+
+- Removed the experimental larger Recipe and Supplies forms. Adaptive now shows
+  the complete original controls column below the street in portrait and beside
+  it in widescreen. All panes retain the original proportions and every game
+  button remains visible.
+- Added a draggable divider to Adaptive. The earlier balanced split is the
+  default; resize the panes live and double-tap the divider to reset. Portrait
+  and widescreen positions are remembered separately. VoiceOver adjustments
+  and browser arrow keys also resize the panes. Only the center grip highlights
+  during interaction.
+- Made the top/side toolbar float over the full screen. Hide controls collapses it
+  to a small restore button; the choice persists without resizing the game.
+  The iOS local preview is build 15.
+- Added an 8-point inset and a thin rounded border on iPhone, keeping the game
+  inside the safe area and clear of the camera and home indicator.
+- Added portable save export/import, a previous-checkpoint backup, and a separate
+  pre-import backup. Incomplete writes preserve the last completed checkpoint.
+  Imports check the archive version, length, and checksum before replacing saves.
+- Added an Adaptive interface with readable cash and price information, separate
+  weather and street views that preserve artwork proportions. Original dialogs
+  temporarily show the full game view.
+- Removed the extra Start day / Full game controls row, giving its space back to
+  the game. Use the original Start Day button and the floating layout selector.
+- Added remembered music/ambience and effects levels, visible save confirmation,
+  and optional action haptics on iOS. Web sound and layout choices also persist.
+
+### Web
+
+- Added portrait stacking, Fill/Fit/Original layouts, a compact toolbar, and an
+  explicit pause control. Touch mapping follows each displayed pane.
+- Added an installable offline app. Each cached build includes matching game
+  code and assets; updates wait until existing game tabs close.
 
 ## 2026-09-05 — iOS build 10
 

@@ -47,12 +47,16 @@
   _preserveAspectRatio = enabled;
   [self setNeedsLayout];
 }
+- (void)setSourceRect:(CGRect)rect {
+  _sourceRect = rect;
+  [self setNeedsLayout];
+}
 - (void)layoutSubviews {
   [super layoutSubviews];
   CGRect previousTop = self.topRect, previousBottom = self.bottomRect;
   CGRect previousTopSource = self.topSource, previousBottomSource = self.bottomSource;
   CGRect space = self.bounds;
-  BOOL stacked = self.portraitPanels;
+  BOOL stacked = self.portraitPanels && CGRectIsEmpty(self.sourceRect);
   self.bottomImage.hidden = !stacked;
   if (stacked) {
     // Stack the entire right column above the entire left column. Keeping the
@@ -72,7 +76,7 @@
     self.bottomRect = lemon_display_rect(self.bottomSource, lemon_pane_space(space, true),
                                          self.preserveAspectRatio);
   } else {
-    self.topSource = CGRectMake(0, 0, 640, 480);
+    self.topSource = CGRectIsEmpty(self.sourceRect) ? CGRectMake(0, 0, 640, 480) : self.sourceRect;
     self.topRect = lemon_display_rect(self.topSource, space, self.preserveAspectRatio);
     self.bottomSource = self.bottomRect = CGRectZero;
   }

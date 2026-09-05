@@ -9,6 +9,7 @@
 #include "generated/imports.h"
 #include "platform.h"
 #include "audio.h"
+#include "save.h"
 #include "game_config.h"
 #include "lifecycle.h"
 #include <pthread.h>
@@ -180,6 +181,7 @@ static struct {
 } messages[1024];
 static unsigned message_head, message_tail;
 static pthread_mutex_t message_lock = PTHREAD_MUTEX_INITIALIZER;
+#include "game_state.h"
 static void post(uint32_t h, uint32_t msg, uint32_t wp, uint32_t lp) {
   pthread_mutex_lock(&message_lock);
   if (message_tail - message_head < 1024)
@@ -204,6 +206,7 @@ void lemon_touch(int x, int y, int phase) {
     post(0, 0x202, 0, pos);
 }
 void lemon_key(unsigned character) { post(0, 0x102, character, 0); }
+void lemon_request_quit(void) { post(0, 0x12, 0, 0); }
 void lemon_set_active(int active) {
   lemon_lifecycle_set_active(active);
   post(0, 6, !!active, 0);
@@ -415,7 +418,11 @@ uint32_t native_api(CPU *c, uint32_t pc) {
       RET(-1, 7);
     }
     FILE *f = NULL;
-    if (creation == 1) {
+    const char *leaf = strrchr(path, '/');
+    int save = writing && leaf && !strcasecmp(leaf + 1, "Lemonade.dat");
+    if (save)
+      f = lemon_save_open(save_dir, creation);
+    else if (creation == 1) {
       if (access(path, F_OK) == 0) {
         last_error = 80;
         RET(-1, 7);
@@ -435,7 +442,7 @@ uint32_t native_api(CPU *c, uint32_t pc) {
         ftruncate(fileno(f), 0);
     }
     if (!f) {
-      last_error = errno == ENOENT ? 2 : 5;
+      last_error = errno == ENOENT ? 2 : errno == EEXIST ? 80 : 5;
       fprintf(stderr, "FILE unavailable: %s error=%u\n", name, last_error);
       RET(-1, 7);
     }
@@ -445,7 +452,7 @@ uint32_t native_api(CPU *c, uint32_t pc) {
         fprintf(stderr, "FILE open: %s (%s)\n", name, writing ? "native save" : "read");
         RET(0x400 + i, 7);
       }
-    fclose(f);
+    lemon_save_close(f, 0);
     last_error = 4;
     RET(-1, 7);
   }
@@ -506,8 +513,12 @@ uint32_t native_api(CPU *c, uint32_t pc) {
     uint32_t h = A(0);
     FILE *f = file_handle(h);
     if (f) {
-      fclose(f);
+      int ok = lemon_save_close(f, 1);
       files[h - 0x400] = NULL;
+      if (!ok) {
+        last_error = 5;
+        RET(0, 1);
+      }
     }
     RET(f || h == 0x200, 1);
   }
@@ -776,6 +787,7 @@ uint32_t native_api(CPU *c, uint32_t pc) {
   }
   case API_Sleep:
     sync_keyboard(c);
+    game_sync(c);
 #ifdef LEMON_WEB
     browser_yield = 1;
 #else
@@ -1272,9 +1284,10 @@ uint32_t native_api(CPU *c, uint32_t pc) {
 /* Called only between runs, after the previous engine worker has returned. */
 /* Reset all guest-owned handles before a new game session; disk saves survive. */
 static void reset_platform(void) {
+  game_reset();
   for (unsigned i = 0; i < 256; i++)
     if (files[i]) {
-      fclose(files[i]);
+      lemon_save_close(files[i], 0);
       files[i] = NULL;
     }
   heap_next = 0x1000000;
@@ -1333,20 +1346,23 @@ static int prepare_run(CPU *cpu, const char *input) {
   put(&c, c.fsbase, 0xffffffff);
   push(&c, 0xeeeeeeee);
   *cpu = c;
+  lemon_save_running(1);
   return 0;
 }
 /* Close resources before discarding guest memory; this also supports Play again. */
 static void finish_run(CPU *c) {
+  game_reset();
   lemon_audio_close();
   for (unsigned i = 0; i < 256; i++)
     if (files[i]) {
-      fclose(files[i]);
+      lemon_save_close(files[i], 0);
       files[i] = NULL;
     }
   if (keyboard_sink)
     keyboard_sink(0, 0, 0, 0, 0);
   free(c->mem);
   c->mem = NULL;
+  lemon_save_running(0);
 }
 int lemon_run(const char *input) {
   CPU c = {0};

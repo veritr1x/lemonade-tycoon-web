@@ -25,7 +25,9 @@ jobs:
           version: 6.0.9
           actions-cache-folder: emsdk-cache
       - name: Test the shared runtime
-        run: python3 tools/test.py
+        run: python3 tools/test.py --integration
+      - name: Test browser layouts
+        run: node --test ports/web/tests/*.test.mjs
       - name: Build and validate WebAssembly
         run: python3 tools/build.py --port web --jobs 2
       # Pull requests build and test but cannot publish the production site.

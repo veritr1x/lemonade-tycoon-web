@@ -12,6 +12,7 @@ void lemon_configure(const char *resources, const char *saves, LemonFrameSink fr
                      LemonDialogSink dialog);
 void lemon_touch(int x, int y, int phase);
 void lemon_key(unsigned character);
+void lemon_request_quit(void);
 void lemon_set_active(int active);
 int lemon_run(const char *image_path);
 #endif

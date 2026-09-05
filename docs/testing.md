@@ -1,32 +1,97 @@
-# Browser checks
+# Testing the ports
 
-Use a separate browser profile or save slot so testing does not overwrite a game.
-Open the console and keep it free of unexpected errors during these checks.
+Use a separate browser profile or the Simulator smoke bundle. Never replace a
+player's save to run a check. Keep the browser console or device log open.
 
-1. Press **Play** and wait for the original main menu.
-2. Create a career in an empty slot. Check immediate field focus, typing, backspace,
-   paste, outside-tap dismissal, tapping to reopen, and Return to confirm.
-3. Buy supplies, adjust the recipe, and finish a day using the original controls.
-4. Record the day, cash, and inventory. Reload the page, press Play, and load the
-   career. Those values should match the game's saved checkpoint.
-5. Toggle sound, background/resume the tab, and check that playback does not pile up.
-6. Enter and leave fullscreen. Try portrait and landscape, including a small viewport.
-   Check coordinate mapping at the edges and that controls stay above the keyboard.
-7. Use the original Quit dialog, then **Play again**. Reload the same save once more.
+## Automated checks
 
-For performance changes, also watch input latency and frame pacing through a busy
-day. For storage changes, check blocked IndexedDB, page reload, and quit/restart.
-For mobile keyboard changes, test a physical device: viewport emulation only proves
-layout and focus state, not software-keyboard presentation.
+```sh
+python3 tools/test.py --integration
+python3 tools/test_ios.py
+node --test ports/web/tests/*.test.mjs
+python3 tools/build.py --port web
+python3 tools/build.py --port ios --smoke-test
+```
 
-## Automated coverage
+The C unit checks use AddressSanitizer/UndefinedBehaviorSanitizer. They cover audio
+mixing and separate volume levels, pause/resume, registry persistence, allocation
+reuse, portable save validation, interrupted writes, and recovery backups.
+Integration checks run the original translated game: three startup/quit sessions,
+original recipe, purchase, and Start Day controls, dialog and selling state, and export/import through the original loader.
 
-`python3 tools/test.py` exercises PCM playback/resampling, lifecycle pause/resume,
-nested runtime exit, registry persistence, buffer sizes, and allocation reuse with
-AddressSanitizer/UndefinedBehaviorSanitizer.
+The iOS and web geometry checks cover portrait stacking, widescreen, Fit/Fill,
+keyboard crops, inverse touch mapping, and the Adaptive street crop. The Simulator
+smoke build uses `local.lemonade.tycoon.smoketest`, a separate save container. Start
+it in portrait with a fresh smoke container; inspect `Documents/smoke.json` and its
+screenshots. Never uninstall the normal app as part of this check.
 
-`--integration` adds original configuration checks, URL handling, and three complete
-startup/main-menu/quit/CRT-exit sessions in one native process. The optional
-`engine/tests/differential.py` compares translated original routines against Unicorn.
-The WebAssembly build also validates its output with V8. These checks complement
-browser playthroughs; they do not establish full game parity.
+## Gameplay and native controls
+
+1. Create a career in an empty slot. Exercise typing, backspace, paste, Return,
+   outside-tap dismissal, and tapping the original field to reopen the keyboard.
+2. Open Recipe in Adaptive's original controls column. Change an ingredient with
+   its original +/− buttons. Compare the same screen in Fill and Original layouts.
+3. Open Supplies in that column. Add packs, press Buy, and confirm in the original
+   dialog. Check that cash and stock change, then Adaptive returns after closing.
+4. Start an unstocked day with the original Start Day button at the bottom of the
+   controls column. Confirm its warning remains visible. Stock the stand and start
+   a selling day; the original navigation must be disabled while the day runs.
+5. Finish several days, including a loss or exhausted stock. Open the original
+   upgrades, location, reports, and career menus through the original controls column or the toolbar layout selector.
+6. Pause/resume and background/foreground during a busy day and while holding a
+   street control. Check the game clock, touch release, audio, and frame pacing.
+
+## Layout, input, and preferences
+
+Check phone and tablet portrait and landscape, a narrow browser window, fullscreen,
+and a large Dynamic Type setting. The toolbar should float over the game in every
+orientation. Hide it, confirm only the restore button remains, then restore it;
+the game bounds must never change. The restore button stays inside the safe area.
+iPhone must retain an 8-point inset and rounded border inside the safe area in
+both orientations; check that the camera and home indicator cover no game content.
+Check that a collapsed toolbar remains collapsed after relaunch.
+
+Every Adaptive pane must keep its original proportions. Drag the divider through
+its range in both orientations; all original buttons must remain visible and
+respond at their new locations. Verify held game input is released, the position
+survives relaunch, and portrait/widescreen remember independent positions.
+Double-tap the bar to restore the balanced default. Test VoiceOver adjustments
+and browser arrow keys, including Enter to reset. Interrupt a drag by rotating,
+pausing, or backgrounding; it must release cleanly. Test Fill,
+Fit, and Original at the pane edges and while a field is active. An outside tap
+must dismiss the original text field's keyboard without pressing another control.
+
+Change layout, mute, music/ambience, and effects; relaunch and confirm persistence.
+Listen to looping and one-shot sounds independently. On physical iPhone, enable
+haptics and pause, then disable haptics and repeat. Simulator
+checks cannot prove physical keyboard presentation, audible output, or haptic feel.
+
+## Saves and recovery
+
+Record the saved day, cash, recipe, and stock. Export the checkpoint, close the game,
+import on the other port, and load the same slot. Export it back and repeat. Imports
+replace the whole career file; confirm the pre-import backup can be exported too.
+Try a truncated or modified archive and ensure the current save remains intact.
+Import is disabled while a game is running. Test the previous checkpoint backup.
+
+Reload/relaunch after an original save checkpoint, after closing normally, and after
+backgrounding. Compare with the checkpoint, not an arbitrary mid-day frame. The
+engine does not serialize all live simulation state. In the browser, also exercise
+blocked IndexedDB and confirm the storage warning and manual export remain useful.
+
+## Offline web app and updates
+
+Build first, then run `python3 tools/serve.py --built --port 8000`. Editable serving
+deliberately does not register a worker. Wait for **Ready to play offline**, switch
+Chrome DevTools networking to Offline, reload, and load/play a saved career.
+
+Repeat from a subdirectory URL, as GitHub Pages uses a repository path. Install the
+app where supported and test a standalone launch; iOS uses Share → Add to Home Screen.
+For updates, keep one old tab open, serve a second complete build, and request a
+worker update. The new worker must wait; the old tab must retain its complete old
+runtime. Close all old tabs and reopen to activate the new build. Incomplete or
+checksum-mismatched builds must never replace a working cache.
+
+These checks complement playthroughs; they do not establish complete original-game
+parity. Record the device, build, completed checks, and any limits when reporting a
+validation result.

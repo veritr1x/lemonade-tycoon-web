@@ -5,22 +5,35 @@ ARM64 app for iPhone and iPad running iOS 17 or later. It uses the same translat
 game code and assets as the web port, with saves in the app's Documents directory.
 Text entry automatically opens the software keyboard; tapping outside dismisses it.
 
-## Portrait prototype
+## Layout and controls
 
 Portrait stacks the original **right column on top** and **left column below** in
 equal-height panes. Both columns stay visible and interactive, including their top
-status bars and bottom game buttons. **Fill screen** is the default and expands
-both panes to the full available width. Both panes send input to the same running
-game, so changing layout preserves progress.
+status bars and bottom game buttons. **Fill screen** expands both panes to the
+available width. Both panes send input to the same running game, so changing
+layout preserves progress. Existing layout choices are remembered; new installs
+start with Adaptive.
 While typing, the pane containing the active field brings it into view above the
 docked keyboard. Tapping outside dismisses the keyboard and restores both columns.
 
 Landscape/widescreen shows the original columns side by side. Sound and pause
-controls move into a narrow rail on the right, leaving the full available height
-for the game. Rotation changes the presentation without restarting the game.
+controls float in a narrow rail on the right. Rotation changes the presentation
+without restarting the game. **Hide controls** leaves a small **Show controls**
+button. The toolbar never reserves a row or strip of the play area, and its hidden
+state persists across launches.
+
+On iPhone, an 8-point inset and thin rounded border keep the game inside the safe
+area, clear of the camera and home indicator. iPad uses the full screen.
 
 The layout menu is available in both orientations:
 
+- **Adaptive interface** puts weather and street views above the complete original
+  controls column in portrait, or beside it in widescreen. Drag the divider
+  between the panes to resize them live; double-tap to restore the balanced
+  default. Each orientation remembers its own split. VoiceOver can adjust the
+  divider too. Every pane retains its proportions and all controls stay visible.
+  Recipe, Supplies, and Start Day use the original game buttons. Original dialogs
+  temporarily show the full game view.
 - **Fill screen** expands the complete image into the available game area. It
   stretches the original artwork without cropping buttons or extending the game world.
 - **Keep proportions** preserves image proportions, with black padding where needed.
@@ -33,10 +46,12 @@ The compact native toolbar provides pause/resume, sound, and layout controls
 with VoiceOver labels and 48-point touch targets. It has no large title, including
 at accessibility text sizes. Loading and restart text use Dynamic Type. The original
 bitmap game menus are not yet independently accessible to VoiceOver, and their text
-does not follow Dynamic Type. Native recipe/supplies forms remain future work.
+does not follow Dynamic Type.
 
 Frame delivery retains only the latest pending frame. Touch cancellation releases
-held game controls, including on rotation and backgrounding. Pausing or an audio
+held game controls, including on rotation and backgrounding. **Settings & saves**
+in the layout menu provides audio levels, optional pause haptics, and portable
+checkpoint export/import. Pausing or an audio
 interruption freezes the shared game clock. iOS play already works offline with
 bundled assets; this prototype does not add mid-day recovery checkpoints.
 
