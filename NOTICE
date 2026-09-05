@@ -1,4 +1,4 @@
-Lemonade Tycoon is the original game represented by this browser port.
+Lemonade Tycoon is the original game represented by these ports.
 Original game names, artwork, audio, data, and code retain their original ownership
 and notices. The in-game credits are preserved.
 
@@ -7,5 +7,5 @@ assets/cold-memory.bin contains the original program image used at startup.
 engine/generated contains C translated from original program instructions.
 These original-game materials are not covered by the port implementation's MIT license.
 
-The handwritten browser host, compatibility runtime, build/test tools, and project
+The handwritten web and iOS hosts, compatibility runtime, build/test tools, and project
 documentation are the port implementation covered by LICENSE.
