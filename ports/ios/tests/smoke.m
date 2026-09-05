@@ -3,6 +3,10 @@
 #import <UIKit/UIKit.h>
 #import "../GameView.h"
 
+@protocol LemonLayoutSelection
+- (void)selectGameLayout:(NSInteger)mode;
+@end
+
 @interface TestTouch : UITouch
 @property(nonatomic) CGPoint point;
 @end
@@ -62,13 +66,18 @@ static void checkHostControls(void) {
           @"Pause disables game input and exposes Resume");
   [pause sendActionsForControlEvents:UIControlEventTouchUpInside];
   require(testGame.userInteractionEnabled, @"Resume restores game input");
-  UIButton *layout = [controller valueForKey:@"layoutButton"];
-  [layout sendActionsForControlEvents:UIControlEventTouchUpInside];
+  [(id<LemonLayoutSelection>)controller selectGameLayout:2];
   [testWindow layoutIfNeeded];
-  require(!testGame.portraitPanels, @"Full-game comparison layout");
-  [layout sendActionsForControlEvents:UIControlEventTouchUpInside];
+  require(!testGame.portraitPanels && testGame.preserveAspectRatio,
+          @"Original layout keeps the full game and its proportions");
+  [(id<LemonLayoutSelection>)controller selectGameLayout:1];
   [testWindow layoutIfNeeded];
-  require(testGame.portraitPanels, @"Portrait panels restored");
+  require(testGame.portraitPanels && testGame.preserveAspectRatio,
+          @"Keep proportions restores fitted portrait columns");
+  [(id<LemonLayoutSelection>)controller selectGameLayout:0];
+  [testWindow layoutIfNeeded];
+  require(testGame.portraitPanels && !testGame.preserveAspectRatio,
+          @"Fill screen restores expanded portrait columns");
   capture(@"portrait-career.png");
   NSString *directory =
       NSSearchPathForDirectoriesInDomains(NSDocumentDirectory, NSUserDomainMask, YES).firstObject;
@@ -91,6 +100,11 @@ static void startChecks(void) {
           @"Top pane shows the complete right column");
   require(CGRectEqualToRect(bottom, CGRectMake(0, 0, 320, 480)),
           @"Bottom pane shows the complete left column");
+  CGRect topDisplay = [[testGame valueForKey:@"topRect"] CGRectValue];
+  CGRect bottomDisplay = [[testGame valueForKey:@"bottomRect"] CGRectValue];
+  require(fabs(topDisplay.size.width - testGame.bounds.size.width) < .01 &&
+              fabs(bottomDisplay.size.width - testGame.bounds.size.width) < .01,
+          @"Fill screen uses the full width of both portrait panes");
   capture(@"portrait-menu.png");
   tap(displayPoint(CGPointMake(54, 198), YES), ^{
     tap(displayPoint(CGPointMake(72, 280), YES), ^{
@@ -132,7 +146,7 @@ void lemon_ios_smoke_test(UIWindow *window) {
   testWindow = window;
   testGame = [window.rootViewController valueForKey:@"game"];
   checks = [NSMutableArray new];
-  [NSUserDefaults.standardUserDefaults setBool:NO forKey:@"classicLayout"];
+  [NSUserDefaults.standardUserDefaults setInteger:0 forKey:@"gameLayout"];
   [window.rootViewController.view setNeedsLayout];
   later(5, ^{
     startChecks();

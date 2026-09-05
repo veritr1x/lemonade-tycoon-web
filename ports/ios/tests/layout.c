@@ -14,16 +14,23 @@ int main(void) {
   unsigned screenCount = sizeof(screens) / sizeof(screens[0]);
   for (unsigned i = 0; i < 3; i++) {
     for (unsigned j = 0; j < screenCount; j++) {
-      CGRect fit = lemon_fit(sources[i], screens[j]);
-      assert(CGRectContainsRect(screens[j], fit));
-      CGPoint middle =
-          lemon_map_point(CGPointMake(CGRectGetMidX(fit), CGRectGetMidY(fit)), fit, sources[i]);
-      near(middle.x, CGRectGetMidX(sources[i]));
-      near(middle.y, CGRectGetMidY(sources[i]));
-      CGPoint end =
-          lemon_map_point(CGPointMake(CGRectGetMaxX(fit), CGRectGetMaxY(fit)), fit, sources[i]);
-      near(end.x, CGRectGetMaxX(sources[i]));
-      near(end.y, CGRectGetMaxY(sources[i]));
+      for (unsigned preserve = 0; preserve < 2; preserve++) {
+        CGRect display = lemon_display_rect(sources[i], screens[j], preserve);
+        assert(CGRectContainsRect(screens[j], display));
+        if (preserve)
+          near(display.size.width / display.size.height,
+               sources[i].size.width / sources[i].size.height);
+        else
+          assert(CGRectEqualToRect(display, screens[j]));
+        CGPoint middle = lemon_map_point(
+            CGPointMake(CGRectGetMidX(display), CGRectGetMidY(display)), display, sources[i]);
+        near(middle.x, CGRectGetMidX(sources[i]));
+        near(middle.y, CGRectGetMidY(sources[i]));
+        CGPoint end = lemon_map_point(CGPointMake(CGRectGetMaxX(display), CGRectGetMaxY(display)),
+                                      display, sources[i]);
+        near(end.x, CGRectGetMaxX(sources[i]));
+        near(end.y, CGRectGetMaxY(sources[i]));
+      }
     }
   }
   // The screen's upper half must map to the right column, and its lower half
@@ -55,5 +62,5 @@ int main(void) {
   }
   CGPoint invalid = lemon_map_point(CGPointZero, CGRectZero, sources[0]);
   assert(invalid.x == -1 && invalid.y == -1);
-  puts("PASS: right-top/left-bottom columns, landscape mapping, keyboard crops, zero-size layout");
+  puts("PASS: filled and fitted columns, widescreen mapping, keyboard crops, zero-size layout");
 }

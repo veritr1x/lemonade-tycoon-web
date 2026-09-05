@@ -7,6 +7,15 @@ User-visible changes are grouped by port. iOS build numbers match the app's
 
 No changes yet.
 
+## 2026-09-05 — iOS build 10
+
+- Made **Fill screen** the default: portrait columns use the full available width,
+  and widescreen uses the full game area without side padding.
+- Added a layout menu with **Fill screen**, **Keep proportions**, and **Original
+  layout**, available in both orientations. The choice persists between launches.
+- Kept touch mapping aligned with the expanded images. Fill stretches the original
+  artwork; the other modes retain its proportions and use black padding.
+
 ## 2026-09-05 — iOS build 8
 
 ### iOS

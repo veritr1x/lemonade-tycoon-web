@@ -4,6 +4,12 @@
 #import "../../engine/platform.h"
 #import "GameView.h"
 
+typedef NS_ENUM(NSInteger, LemonLayoutMode) {
+  LemonLayoutFill,
+  LemonLayoutFit,
+  LemonLayoutOriginal,
+};
+
 // UIKit and AVAudioEngine state is confined to the main thread.
 static AVAudioEngine *audioEngine;
 static BOOL audioRequested, audioInterrupted, appActive = YES, userPaused, userMuted;
@@ -220,10 +226,9 @@ static int presentDialog(const char *title, const char *body, int trial, char *n
   button.toolTip = label;
   [button.widthAnchor constraintEqualToConstant:48].active = YES;
   NSLayoutConstraint *height = [button.heightAnchor constraintGreaterThanOrEqualToConstant:48];
-  // A hidden stack item gets zero height in the vertical widescreen toolbar.
-  height.priority = 999;
   height.active = YES;
-  [button addTarget:self action:action forControlEvents:UIControlEventTouchUpInside];
+  if (action)
+    [button addTarget:self action:action forControlEvents:UIControlEventTouchUpInside];
   return button;
 }
 - (void)refreshHostActivity {
@@ -259,13 +264,36 @@ static int presentDialog(const char *title, const char *body, int trial, char *n
   self.soundButton.accessibilityLabel = userMuted ? @"Unmute sound" : @"Mute sound";
   self.soundButton.toolTip = self.soundButton.accessibilityLabel;
 }
-- (void)toggleLayout {
+- (LemonLayoutMode)gameLayoutMode {
+  NSInteger mode = [NSUserDefaults.standardUserDefaults integerForKey:@"gameLayout"];
+  return mode >= LemonLayoutFill && mode <= LemonLayoutOriginal ? mode : LemonLayoutFill;
+}
+- (void)selectGameLayout:(LemonLayoutMode)mode {
+  [self.game cancelGameTouch];
   [self.game resignFirstResponder];
-  BOOL classic = ![NSUserDefaults.standardUserDefaults boolForKey:@"classicLayout"];
-  [NSUserDefaults.standardUserDefaults setBool:classic forKey:@"classicLayout"];
+  [NSUserDefaults.standardUserDefaults setInteger:mode forKey:@"gameLayout"];
+  [self updateLayoutMenu];
   [self.view setNeedsLayout];
   UIAccessibilityPostNotification(UIAccessibilityAnnouncementNotification,
-                                  classic ? @"Full game layout" : @"Portrait panels enabled");
+                                  self.layoutButton.accessibilityValue);
+}
+- (void)updateLayoutMenu {
+  NSArray<NSString *> *titles = @[ @"Fill screen", @"Keep proportions", @"Original layout" ];
+  NSMutableArray<UIAction *> *actions = [NSMutableArray new];
+  LemonLayoutMode selected = [self gameLayoutMode];
+  __weak LemonController *weakSelf = self;
+  for (LemonLayoutMode mode = LemonLayoutFill; mode <= LemonLayoutOriginal; mode++) {
+    UIAction *action = [UIAction actionWithTitle:titles[mode]
+                                           image:nil
+                                      identifier:nil
+                                         handler:^(UIAction *sender) {
+                                           [weakSelf selectGameLayout:mode];
+                                         }];
+    action.state = mode == selected ? UIMenuElementStateOn : UIMenuElementStateOff;
+    [actions addObject:action];
+  }
+  self.layoutButton.menu = [UIMenu menuWithTitle:@"" children:actions];
+  self.layoutButton.accessibilityValue = titles[selected];
 }
 - (void)viewWillLayoutSubviews {
   [super viewWillLayoutSubviews];
@@ -280,14 +308,16 @@ static int presentDialog(const char *title, const char *body, int trial, char *n
     // No title or text-size-dependent header competes with the game. Portrait
     // gets one compact row; widescreen gets a narrow rail beside the full frame.
     self.toolbar.axis = wide ? UILayoutConstraintAxisVertical : UILayoutConstraintAxisHorizontal;
-    self.layoutButton.hidden = wide;
+    self.toolbar.spacing = wide ? 4 : 8;
     [NSLayoutConstraint activateConstraints:active];
   }
-  BOOL panels = !wide && ![NSUserDefaults.standardUserDefaults boolForKey:@"classicLayout"];
+  LemonLayoutMode mode = [self gameLayoutMode];
+  BOOL panels = !wide && mode != LemonLayoutOriginal;
   if (self.game.portraitPanels != panels)
     self.game.portraitPanels = panels;
-  self.layoutButton.accessibilityLabel = panels ? @"Show full game only" : @"Use portrait panels";
-  self.layoutButton.toolTip = self.layoutButton.accessibilityLabel;
+  BOOL preserve = mode != LemonLayoutFill;
+  if (self.game.preserveAspectRatio != preserve)
+    self.game.preserveAspectRatio = preserve;
 }
 - (void)viewDidLoad {
   [super viewDidLoad];
@@ -301,9 +331,9 @@ static int presentDialog(const char *title, const char *body, int trial, char *n
                             label:userMuted ? @"Unmute sound" : @"Mute sound"
                            action:@selector(toggleSound)];
   self.pauseButton = [self button:@"pause.fill" label:@"Pause game" action:@selector(togglePause)];
-  self.layoutButton = [self button:@"rectangle.split.1x2"
-                             label:@"Change layout"
-                            action:@selector(toggleLayout)];
+  self.layoutButton = [self button:@"rectangle.split.1x2" label:@"Game layout" action:NULL];
+  self.layoutButton.showsMenuAsPrimaryAction = YES;
+  [self updateLayoutMenu];
   self.toolbar = [[UIStackView alloc]
       initWithArrangedSubviews:@[ self.soundButton, self.pauseButton, self.layoutButton ]];
   self.toolbar.alignment = UIStackViewAlignmentCenter;

@@ -9,20 +9,27 @@ Text entry automatically opens the software keyboard; tapping outside dismisses 
 
 Portrait stacks the original **right column on top** and **left column below** in
 equal-height panes. Both columns stay visible and interactive, including their top
-status bars and bottom game buttons. Images keep their original proportions, with
-space at the sides when needed. The layout button returns to a single full-game
-view for comparison or wide menus. Both panes
-send input to the same running game, so changing layout preserves progress.
+status bars and bottom game buttons. **Fill screen** is the default and expands
+both panes to the full available width. Both panes send input to the same running
+game, so changing layout preserves progress.
 While typing, the pane containing the active field brings it into view above the
 docked keyboard. Tapping outside dismisses the keyboard and restores both columns.
 
 Landscape/widescreen shows the original columns side by side. Sound and pause
 controls move into a narrow rail on the right, leaving the full available height
 for the game. Rotation changes the presentation without restarting the game.
-The original image keeps its 4:3 proportions; this does not extend the game world
-or stretch its artwork to 16:9.
 
-The compact native toolbar provides pause/resume, sound, and portrait layout controls
+The layout menu is available in both orientations:
+
+- **Fill screen** expands the complete image into the available game area. It
+  stretches the original artwork without cropping buttons or extending the game world.
+- **Keep proportions** preserves image proportions, with black padding where needed.
+- **Original layout** shows the complete original 640×480 view with its 4:3 proportions,
+  useful for wide menus and comparison.
+
+The choice is saved on the device.
+
+The compact native toolbar provides pause/resume, sound, and layout controls
 with VoiceOver labels and 48-point touch targets. It has no large title, including
 at accessibility text sizes. Loading and restart text use Dynamic Type. The original
 bitmap game menus are not yet independently accessible to VoiceOver, and their text

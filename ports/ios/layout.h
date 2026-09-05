@@ -23,6 +23,9 @@ static inline CGRect lemon_fit(CGRect source, CGRect space) {
   return CGRectMake(CGRectGetMidX(space) - size.width / 2, CGRectGetMidY(space) - size.height / 2,
                     size.width, size.height);
 }
+static inline CGRect lemon_display_rect(CGRect source, CGRect space, bool preserveAspectRatio) {
+  return preserveAspectRatio ? lemon_fit(source, space) : space;
+}
 static inline CGPoint lemon_map_point(CGPoint point, CGRect display, CGRect source) {
   if (display.size.width <= 0 || display.size.height <= 0)
     return CGPointMake(-1, -1);

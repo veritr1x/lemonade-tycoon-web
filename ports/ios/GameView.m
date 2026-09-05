@@ -13,10 +13,7 @@
 @implementation LemonView
 - (instancetype)initWithFrame:(CGRect)frame {
   if ((self = [super initWithFrame:frame])) {
-    self.backgroundColor = [UIColor colorWithRed:7 / 255.0
-                                           green:20 / 255.0
-                                            blue:13 / 255.0
-                                           alpha:1];
+    self.backgroundColor = UIColor.blackColor;
     _portraitPanels = YES;
     _topImage = [UIImageView new];
     _bottomImage = [UIImageView new];
@@ -46,11 +43,15 @@
   _portraitPanels = enabled;
   [self setNeedsLayout];
 }
+- (void)setPreserveAspectRatio:(BOOL)enabled {
+  _preserveAspectRatio = enabled;
+  [self setNeedsLayout];
+}
 - (void)layoutSubviews {
   [super layoutSubviews];
   CGRect previousTop = self.topRect, previousBottom = self.bottomRect;
   CGRect previousTopSource = self.topSource, previousBottomSource = self.bottomSource;
-  CGRect space = CGRectInset(self.bounds, 8, 8);
+  CGRect space = self.bounds;
   BOOL stacked = self.portraitPanels;
   self.bottomImage.hidden = !stacked;
   if (stacked) {
@@ -66,11 +67,13 @@
       else
         self.topSource = lemon_text_crop(self.textRect);
     }
-    self.topRect = lemon_fit(self.topSource, lemon_pane_space(space, false));
-    self.bottomRect = lemon_fit(self.bottomSource, lemon_pane_space(space, true));
+    self.topRect = lemon_display_rect(self.topSource, lemon_pane_space(space, false),
+                                      self.preserveAspectRatio);
+    self.bottomRect = lemon_display_rect(self.bottomSource, lemon_pane_space(space, true),
+                                         self.preserveAspectRatio);
   } else {
     self.topSource = CGRectMake(0, 0, 640, 480);
-    self.topRect = lemon_fit(self.topSource, space);
+    self.topRect = lemon_display_rect(self.topSource, space, self.preserveAspectRatio);
     self.bottomSource = self.bottomRect = CGRectZero;
   }
   self.topImage.frame = self.topRect;
