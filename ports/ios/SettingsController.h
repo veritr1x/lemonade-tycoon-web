@@ -2,4 +2,5 @@
 @interface LemonSettingsController : UIViewController
 @property(nonatomic, copy) BOOL (^isGameRunning)(void);
 @property(nonatomic, copy) void (^closeGame)(void);
+@property(nonatomic, copy) void (^displaySettingsChanged)(void);
 @end

@@ -97,6 +97,7 @@ def build(jobs):
         "_lemon_web_import",
         "_lemon_request_quit",
         "_lemon_audio_levels",
+        "_lemon_set_frame_rate",
         "_lemon_touch",
         "_lemon_key",
     ]

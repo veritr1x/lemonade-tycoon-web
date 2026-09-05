@@ -18,6 +18,7 @@
 #include <unistd.h>
 #include <errno.h>
 #include <strings.h>
+#include <stdatomic.h>
 static uint32_t heap_next = 0x1000000;
 static struct {
   uint32_t addr, size, capacity;
@@ -84,6 +85,7 @@ static void sync_keyboard(CPU *c) {
 static uint32_t active_window;
 #ifdef LEMON_WEB
 static int browser_yield;
+static uint64_t browser_ready_at;
 #endif
 static uint32_t command_line, environment_wide, environment_ansi;
 /* Restrict guest filenames to the resource and save directories. */
@@ -111,6 +113,27 @@ typedef struct {
 } Gdi;
 static Gdi gdi[1024];
 static unsigned frame_count;
+static uint64_t next_native_tick;
+static atomic_uint requested_frame_rate = 60;
+static unsigned paced_frame_rate;
+void lemon_set_frame_rate(unsigned rate) {
+  atomic_store(&requested_frame_rate, rate ? (rate > 120 ? 120 : rate) : 60);
+}
+static uint64_t native_tick_delay(uint64_t now) {
+  unsigned rate = atomic_load(&requested_frame_rate);
+  if (rate != paced_frame_rate) {
+    next_native_tick = 0;
+    paced_frame_rate = rate;
+  }
+  const uint64_t period = 1000000000ull / rate;
+  // Missed deadlines do not add a full frame of delay or trigger a catch-up
+  // burst after resume. Fast frames use only the remainder of their budget.
+  if (!next_native_tick || now > next_native_tick + period)
+    next_native_tick = now;
+  uint64_t delay = next_native_tick > now ? next_native_tick - now : 0;
+  next_native_tick += period;
+  return delay;
+}
 static uint32_t screen[640 * 480];
 static uint32_t gdi_new(int kind) {
   for (unsigned i = 1; i < 1024; i++)
@@ -148,6 +171,42 @@ static uint32_t pixel(CPU *c, Gdi *b, int x, int y) {
   else
     p = (rd(c, row + x / 8, 8) >> (7 - x % 8)) & 1;
   return rd(c, b->palette + p * 4, 32) & 0xffffff;
+}
+/* The game presents an unscaled RGB555/565 bitmap. Convert one row at a time
+ * with an exact lookup table instead of repeating coordinate division, mask
+ * discovery, and channel division for every pixel. Unusual formats, clipping,
+ * scaling, or invalid buffers retain the generic pixel() path below. */
+static int blit_rgb16(CPU *c, Gdi *b, int x, int y, int w, int h, int sx, int sy) {
+  if (c->fault || b->bits != 16 || w <= 0 || h <= 0 || x < 0 || y < 0 || sx < 0 || sy < 0 ||
+      (int64_t)x + w > 640 || (int64_t)y + h > 480 || (int64_t)sx + w > b->width ||
+      (int64_t)sy + h > b->height || b->stride < (int64_t)b->width * 2 ||
+      (uint64_t)b->pixels + (uint64_t)b->stride * b->height > c->mem_size ||
+      (uint64_t)b->pixels + (uint64_t)b->stride * b->height > UINT32_MAX)
+    return 0;
+  int format = b->masks[0] == 0xf800 && b->masks[1] == 0x7e0 && b->masks[2] == 0x1f   ? 565
+               : b->masks[0] == 0x7c00 && b->masks[1] == 0x3e0 && b->masks[2] == 0x1f ? 555
+                                                                                      : 0;
+  if (!format)
+    return 0;
+  static uint32_t colors[65536];
+  static int cached_format;
+  if (format != cached_format) {
+    for (unsigned p = 0; p < 65536; p++)
+      colors[p] =
+          channel(p, b->masks[0]) << 16 | channel(p, b->masks[1]) << 8 | channel(p, b->masks[2]);
+    cached_format = format;
+  }
+  for (int yy = 0; yy < h; yy++) {
+    unsigned row = b->topdown ? sy + yy : b->height - 1 - sy - yy;
+    const uint8_t *source = c->mem + b->pixels + (uint64_t)row * b->stride + sx * 2;
+    uint32_t *destination = screen + (y + yy) * 640 + x;
+    for (int xx = 0; xx < w; xx++) {
+      uint16_t value;
+      memcpy(&value, source + xx * 2, sizeof(value)); // Also supports unaligned source rows.
+      destination[xx] = colors[value];
+    }
+  }
+  return 1;
 }
 static void save_frame(void) {
   if (frame_sink) {
@@ -664,11 +723,12 @@ uint32_t native_api(CPU *c, uint32_t pc) {
       fault(c, pc);
       return 0;
     }
-    for (int yy = 0; yy < h; yy++)
-      for (int xx = 0; xx < w; xx++)
-        if (x + xx >= 0 && x + xx < 640 && y + yy >= 0 && y + yy < 480)
-          screen[(y + yy) * 640 + x + xx] =
-              pixel(c, b, sx + (int64_t)xx * sw / w, sy + (int64_t)yy * sh / h);
+    if (!(sw == w && sh == h && blit_rgb16(c, b, x, y, w, h, sx, sy)))
+      for (int yy = 0; yy < h; yy++)
+        for (int xx = 0; xx < w; xx++)
+          if (x + xx >= 0 && x + xx < 640 && y + yy >= 0 && y + yy < 480)
+            screen[(y + yy) * 640 + x + xx] =
+                pixel(c, b, sx + (int64_t)xx * sw / w, sy + (int64_t)yy * sh / h);
     frame_count++;
     if (frame_sink || frame_count <= 10 || frame_count % 60 == 0)
       save_frame();
@@ -790,9 +850,28 @@ uint32_t native_api(CPU *c, uint32_t pc) {
     game_sync(c);
 #ifdef LEMON_WEB
     browser_yield = 1;
+    if (A(0) == 1) {
+      uint64_t now = lemon_monotonic_ns();
+      browser_ready_at = now + native_tick_delay(now);
+    }
 #else
     lemon_lifecycle_wait();
-    usleep((uint64_t)A(0) * 1000);
+    if (A(0) == 1) {
+      // The original message pump requests 1 ms after every redraw, running
+      // the software renderer as fast as the CPU allows. Pace that loop at
+      // the host's selected refresh rate. Keep elapsed game time unchanged and
+      // discard old deadlines after a pause or a slow frame.
+      uint64_t remaining = native_tick_delay(lemon_monotonic_ns());
+      // A late frame must not pay another 1 ms penalty. Near 120 FPS that
+      // extra yield can keep otherwise fast rendering behind every deadline.
+      if (remaining) {
+        struct timespec delay = {(time_t)(remaining / 1000000000ull),
+                                 (long)(remaining % 1000000000ull)};
+        nanosleep(&delay, NULL);
+      }
+    } else {
+      usleep((uint64_t)A(0) * 1000);
+    }
 #endif
     RET(0, 1);
   case API_DialogBoxParamA: {
@@ -1300,6 +1379,11 @@ static void reset_platform(void) {
   memset(api_counts, 0, sizeof(api_counts));
   memset(gdi, 0, sizeof(gdi));
   frame_count = 0;
+  next_native_tick = 0;
+  paced_frame_rate = 0;
+#ifdef LEMON_WEB
+  browser_ready_at = 0;
+#endif
   memset(screen, 0, sizeof(screen));
   memset(windows, 0, sizeof(windows));
   window_count = 0;

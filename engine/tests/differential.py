@@ -159,13 +159,115 @@ for n in [0, 1, 2, 3, 4, 5, 7, 8, 15, 16, 31, 32, 63, 64, 255, 256, 1023]:
 for n in range(100):
     data = bytes(rng.choice(b"abc/def.xyz") for _ in range(n)) + b"\0"
     run(0x453A50, [(OBJ, data)], args=[OBJ, ord("/")], inspect=[(OBJ, len(data))])
+# Compare the accelerated row-copy boundary against every original instruction.
+# Include odd addresses, a one-pixel row, identical spans, and arbitrary incoming
+# flags. Check all registers, flags, pixels, guard bytes, and instruction counts.
+lib.game_dispatch.argtypes = [C.POINTER(CPU), C.c_uint32]
+lib.game_dispatch.restype = C.c_uint32
+flag_bits = dict(cf=0, pf=2, af=4, zf=6, sf=7, df=10, of=11)
+for case in range(500):
+    count = [1, 2, 3, 31, 320, 640, 1024][case % 7]
+    source = OBJ + 16 + case % 4
+    destination = source if case % 5 == 0 else OBJ + 4096 + case % 3
+    data = bytes(rng.getrandbits(8) for _ in range(8192))
+    C.memmove(C.addressof(memory) + OBJ, data, len(data))
+    u.mem_write(OBJ, data)
+    cpu = CPU()
+    cpu.mem, cpu.mem_size = memory, SIZE
+    for name in regs:
+        setattr(cpu, name, rng.getrandbits(32))
+    cpu.eax, cpu.edi, cpu.ebp = 2, 1, count
+    cpu.ebx, cpu.edx = source, destination - 2
+    cpu.steps = rng.randrange(10000)
+    expected_steps = cpu.steps + 7 * count - 3
+    cpu.limit = expected_steps
+    flags = 0x202
+    for name, bit in flag_bits.items():
+        value = rng.randrange(2)
+        setattr(cpu, name, value)
+        flags |= value << bit
+    for name in regs:
+        u.reg_write(getattr(R, "UC_X86_REG_" + name.upper()), getattr(cpu, name))
+    u.reg_write(R.UC_X86_REG_EFLAGS, flags)
+    u.emu_start(0x434001, 0x434009, count=10000)
+    assert u.reg_read(R.UC_X86_REG_EIP) == 0x434009
+    assert lib.game_dispatch(C.byref(cpu), 0x434001) == 0x434009
+    assert cpu.steps == expected_steps and not cpu.fault
+    for name in regs:
+        assert getattr(cpu, name) == u.reg_read(
+            getattr(R, "UC_X86_REG_" + name.upper())
+        ), name
+    flags = u.reg_read(R.UC_X86_REG_EFLAGS)
+    for name, bit in flag_bits.items():
+        assert getattr(cpu, name) == (flags >> bit) & 1, name
+    assert bytes(memory[OBJ : OBJ + len(data)]) == bytes(u.mem_read(OBJ, len(data)))
+    tests += 1
+
+# The keyed sprite row leaves transparent pixels untouched and maps visible
+# pixels through a 16-bit palette. Compare both branch paths and the last EBP.
+lib.lemon_test_palette_span.argtypes = [C.POINTER(CPU)]
+lib.lemon_test_palette_span.restype = C.c_int
+palette = OBJ + 0x10000
+palette_data = bytes(rng.getrandbits(8) for _ in range(131072))
+C.memmove(C.addressof(memory) + palette, palette_data, len(palette_data))
+u.mem_write(palette, palette_data)
+for case in range(500):
+    count = [1, 2, 31, 320, 640, 1024][case % 6]
+    key = rng.getrandbits(16)
+    values = [
+        key if case % 3 == 0 or rng.randrange(3) == 0 else rng.getrandbits(16)
+        for _ in range(count)
+    ]
+    data = bytearray(rng.getrandbits(8) for _ in range(8192))
+    source, destination = OBJ + 3, OBJ + 4097
+    data[3 : 3 + count * 2] = struct.pack("<" + "H" * count, *values)
+    C.memmove(C.addressof(memory) + OBJ, bytes(data), len(data))
+    u.mem_write(OBJ, bytes(data))
+    stack_data = bytearray(64)
+    struct.pack_into("<H", stack_data, 0x10, key)
+    struct.pack_into("<I", stack_data, 0x14, palette)
+    struct.pack_into("<I", stack_data, 0x20, 1)
+    C.memmove(C.addressof(memory) + STACK, bytes(stack_data), len(stack_data))
+    u.mem_write(STACK, bytes(stack_data))
+    cpu = CPU()
+    cpu.mem, cpu.mem_size = memory, SIZE
+    for name in regs:
+        setattr(cpu, name, rng.getrandbits(32))
+    cpu.eax, cpu.ecx, cpu.ebx, cpu.edi, cpu.esp = count, 2, source, destination, STACK
+    cpu.steps, cpu.limit = 123, 123 + 13 * count
+    flags = 0x202
+    for name, bit in flag_bits.items():
+        value = rng.randrange(2)
+        setattr(cpu, name, value)
+        flags |= value << bit
+    for name in regs:
+        u.reg_write(getattr(R, "UC_X86_REG_" + name.upper()), getattr(cpu, name))
+    u.reg_write(R.UC_X86_REG_EFLAGS, flags)
+    u.emu_start(0x4346B5, 0x4346DE, count=20000)
+    assert u.reg_read(R.UC_X86_REG_EIP) == 0x4346DE
+    assert lib.lemon_test_palette_span(C.byref(cpu))
+    assert cpu.steps == 123 + count * 9 + sum(v != key for v in values) * 4
+    for name in regs:
+        assert getattr(cpu, name) == u.reg_read(
+            getattr(R, "UC_X86_REG_" + name.upper())
+        ), name
+    flags = u.reg_read(R.UC_X86_REG_EFLAGS)
+    for name, bit in flag_bits.items():
+        assert getattr(cpu, name) == (flags >> bit) & 1, name
+    assert bytes(memory[OBJ : OBJ + len(data)]) == bytes(u.mem_read(OBJ, len(data)))
+    assert bytes(memory[STACK : STACK + 64]) == bytes(u.mem_read(STACK, 64))
+    assert bytes(memory[palette : palette + 131072]) == bytes(
+        u.mem_read(palette, 131072)
+    )
+    tests += 1
+
 report = dict(
     result="passed",
     cases=tests,
     host=platform.machine(),
     oracle="Original x86 routines executed by Unicorn",
     native="Ahead-of-time compiled host shared library",
-    scope="15 original accounting/date routines, original parameter multiplication, a multi-call accounting update, block copying/clearing, and reverse string search",
+    scope="15 original accounting/date routines, original parameter multiplication, a multi-call accounting update, block copying/clearing, reverse string search, and accelerated pixel rows",
     limitations="Does not validate whole-game behavior, all translated instructions, platform APIs, UI, or iOS execution",
 )
 Path("build/tests/differential.json").write_text(json.dumps(report, indent=2))

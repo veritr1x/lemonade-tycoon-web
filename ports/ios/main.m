@@ -1,11 +1,20 @@
 #import <UIKit/UIKit.h>
 #import <AVFoundation/AVFoundation.h>
+#import <QuartzCore/QuartzCore.h>
+#include <math.h>
 #import "../../engine/audio.h"
 #import "../../engine/platform.h"
 #import "GameView.h"
 #import "SettingsController.h"
 #import "DashboardView.h"
 #import "../../engine/save.h"
+#ifdef LEMON_BENCHMARK
+void lemon_benchmark_frame(BOOL delivered);
+void lemon_benchmark_poll(void);
+void lemon_benchmark_prepare(void);
+void lemon_benchmark_start(UIWindow *window);
+void lemon_benchmark_display_tick(void);
+#endif
 
 typedef NS_ENUM(NSInteger, LemonLayoutMode) {
   LemonLayoutFill,
@@ -19,7 +28,6 @@ static AVAudioEngine *audioEngine;
 static BOOL audioRequested, audioInterrupted, appActive = YES, userPaused, userMuted;
 static NSLock *frameLock;
 static NSData *pendingFrame;
-static BOOL frameDeliveryQueued;
 
 static BOOL hostActive(void) { return appActive && !audioInterrupted && !userPaused; }
 static BOOL resumeAudio(void) {
@@ -104,10 +112,15 @@ void lemon_audio_stop(void) {
 @property(nonatomic, strong) UIButton *hideControlsButton, *showControlsButton;
 @property(nonatomic, strong) LemonDashboardView *dashboard;
 @property(nonatomic, strong) NSTimer *hostTimer;
+@property(nonatomic, strong) CADisplayLink *displayLink;
+@property(nonatomic, strong) UILabel *fpsLabel;
+@property(nonatomic) unsigned frameRateLimit, fpsFrames;
+@property(nonatomic) CFTimeInterval fpsStarted;
 @property(nonatomic, strong) UILabel *saveNotice;
 @property(nonatomic) unsigned lastSaveRevision;
 @property(nonatomic, strong) NSArray<NSLayoutConstraint *> *portraitConstraints, *wideConstraints;
 - (void)refreshHostActivity;
+- (void)refreshDisplaySettings;
 @end
 static __weak LemonController *controller;
 static int openGameURL(const char *address) {
@@ -140,38 +153,16 @@ static void presentKeyboard(int visible, int x, int y, int width, int height) {
 static void presentFrame(const uint32_t *rgb, unsigned width, unsigned height) {
   if (width != 640 || height != 480)
     return;
+#ifdef LEMON_BENCHMARK
+  lemon_benchmark_frame(NO);
+#endif
   @autoreleasepool {
-    // At most one pending main-thread delivery. Replace stale pixels instead of
-    // letting slow layout, rotation, or accessibility build an unbounded queue.
+    // The display link consumes only the latest frame. Slow layout or a lower
+    // system refresh rate cannot create an unbounded queue of UIKit updates.
     NSData *data = [NSData dataWithBytes:rgb length:width * height * 4];
     [frameLock lock];
     pendingFrame = data;
-    BOOL schedule = !frameDeliveryQueued;
-    frameDeliveryQueued = YES;
     [frameLock unlock];
-    if (!schedule)
-      return;
-    dispatch_async(dispatch_get_main_queue(), ^{
-      [frameLock lock];
-      NSData *latest = pendingFrame;
-      pendingFrame = nil;
-      frameDeliveryQueued = NO;
-      [frameLock unlock];
-      if (!controller.running || !latest)
-        return;
-      CGDataProviderRef provider = CGDataProviderCreateWithCFData((__bridge CFDataRef)latest);
-      CGColorSpaceRef colors = CGColorSpaceCreateDeviceRGB();
-      CGImageRef cg = CGImageCreate(640, 480, 8, 32, 640 * 4, colors,
-                                    kCGBitmapByteOrder32Little | kCGImageAlphaNoneSkipFirst,
-                                    provider, NULL, NO, kCGRenderingIntentDefault);
-      UIImage *image = [UIImage imageWithCGImage:cg];
-      controller.game.frameImage = image;
-      controller.dashboard.frameImage = image;
-      CGImageRelease(cg);
-      CGColorSpaceRelease(colors);
-      CGDataProviderRelease(provider);
-      controller.status.hidden = YES;
-    });
   }
 }
 static int presentDialog(const char *title, const char *body, int trial, char *name, char *code) {
@@ -245,6 +236,13 @@ static int presentDialog(const char *title, const char *body, int trial, char *n
 }
 - (void)refreshHostActivity {
   lemon_set_active(hostActive());
+  self.displayLink.paused = !hostActive() || !self.running;
+  self.fpsStarted = CACurrentMediaTime();
+  self.fpsFrames = 0;
+  self.fpsLabel.text = @"0\nFPS";
+  self.fpsLabel.accessibilityValue = @"0 frames per second";
+  self.hostTimer.fireDate = hostActive() && self.running ? NSDate.date : NSDate.distantFuture;
+  UIApplication.sharedApplication.idleTimerDisabled = hostActive() && self.running;
   if (hostActive())
     resumeAudio();
   else
@@ -256,6 +254,63 @@ static int presentDialog(const char *title, const char *body, int trial, char *n
   UIButtonConfiguration *style = self.pauseButton.configuration;
   style.image = [UIImage systemImageNamed:userPaused ? @"play.fill" : @"pause.fill"];
   self.pauseButton.configuration = style;
+}
+- (void)refreshDisplaySettings {
+  UIScreen *screen = self.view.window.screen ?: UIScreen.mainScreen;
+  unsigned selected =
+      [NSUserDefaults.standardUserDefaults integerForKey:@"frameRate"] == 60 ? 60 : 120;
+  self.frameRateLimit = MIN(selected, screen.maximumFramesPerSecond);
+  if (NSProcessInfo.processInfo.lowPowerModeEnabled)
+    self.frameRateLimit = MIN(self.frameRateLimit, 60);
+  float maximum = MAX(1, self.frameRateLimit);
+  self.displayLink.preferredFrameRateRange =
+      CAFrameRateRangeMake(MIN(maximum, maximum > 60 ? 80 : 30), maximum, maximum);
+  lemon_set_frame_rate(self.frameRateLimit);
+  self.fpsLabel.hidden = ![NSUserDefaults.standardUserDefaults boolForKey:@"showFPS"];
+}
+- (void)displayTick:(CADisplayLink *)link {
+  if (!self.running || !hostActive())
+    return;
+#ifdef LEMON_BENCHMARK
+  lemon_benchmark_display_tick();
+#endif
+  // Follow the rate the system actually grants, including Low Power Mode and
+  // display changes. A 120 Hz preference never forces 120 software redraws on 60 Hz.
+  CFTimeInterval interval = link.targetTimestamp - link.timestamp;
+  if (interval > 0)
+    lemon_set_frame_rate(MIN(self.frameRateLimit, MAX(1, (unsigned)lround(1 / interval))));
+  [frameLock lock];
+  NSData *latest = pendingFrame;
+  pendingFrame = nil;
+  [frameLock unlock];
+  if (!latest)
+    return;
+  CGDataProviderRef provider = CGDataProviderCreateWithCFData((__bridge CFDataRef)latest);
+  CGColorSpaceRef colors = CGColorSpaceCreateDeviceRGB();
+  CGImageRef cg = CGImageCreate(640, 480, 8, 32, 640 * 4, colors,
+                                kCGBitmapByteOrder32Little | kCGImageAlphaNoneSkipFirst, provider,
+                                NULL, NO, kCGRenderingIntentDefault);
+  UIImage *image = [UIImage imageWithCGImage:cg];
+  self.game.frameImage = image;
+  self.dashboard.frameImage = image;
+  self.fpsFrames++;
+#ifdef LEMON_BENCHMARK
+  lemon_benchmark_frame(YES);
+#endif
+  CGImageRelease(cg);
+  CGColorSpaceRelease(colors);
+  CGDataProviderRelease(provider);
+  self.status.hidden = YES;
+}
+- (void)updateFPS {
+  CFTimeInterval now = CACurrentMediaTime(), elapsed = now - self.fpsStarted;
+  if (elapsed < 1)
+    return;
+  unsigned fps = (unsigned)lround(self.fpsFrames / elapsed);
+  self.fpsLabel.text = [NSString stringWithFormat:@"%u\nFPS", fps];
+  self.fpsLabel.accessibilityValue = [NSString stringWithFormat:@"%u frames per second", fps];
+  self.fpsFrames = 0;
+  self.fpsStarted = now;
 }
 - (void)togglePause {
   [self.dashboard cancelGameTouch];
@@ -293,6 +348,9 @@ static int presentDialog(const char *title, const char *body, int trial, char *n
   __weak LemonController *weakSelf = self;
   settings.isGameRunning = ^BOOL {
     return weakSelf.running;
+  };
+  settings.displaySettingsChanged = ^{
+    [weakSelf refreshDisplaySettings];
   };
   settings.closeGame = ^{
     userPaused = NO;
@@ -425,8 +483,17 @@ static int presentDialog(const char *title, const char *body, int trial, char *n
   self.showControlsButton.layer.cornerRadius = 24;
   self.showControlsButton.clipsToBounds = YES;
   [self updateLayoutMenu];
+  self.fpsLabel = [UILabel new];
+  self.fpsLabel.numberOfLines = 2;
+  self.fpsLabel.textAlignment = NSTextAlignmentCenter;
+  self.fpsLabel.font = [UIFont monospacedDigitSystemFontOfSize:12 weight:UIFontWeightMedium];
+  self.fpsLabel.textColor = UIColor.systemYellowColor;
+  self.fpsLabel.accessibilityLabel = @"Game frame rate";
+  NSLayoutConstraint *fpsWidth = [self.fpsLabel.widthAnchor constraintEqualToConstant:48];
+  fpsWidth.priority = UILayoutPriorityDefaultHigh; // Hidden stack items collapse to zero.
+  fpsWidth.active = YES;
   self.toolbar = [[UIStackView alloc] initWithArrangedSubviews:@[
-    self.soundButton, self.pauseButton, self.layoutButton, self.hideControlsButton
+    self.soundButton, self.pauseButton, self.layoutButton, self.fpsLabel, self.hideControlsButton
   ]];
   self.toolbar.alignment = UIStackViewAlignmentCenter;
   self.toolbar.spacing = 8;
@@ -516,6 +583,10 @@ static int presentDialog(const char *title, const char *body, int trial, char *n
     [self.restart.heightAnchor constraintGreaterThanOrEqualToConstant:44],
     [self.restart.widthAnchor constraintGreaterThanOrEqualToConstant:120]
   ]];
+  self.displayLink = [CADisplayLink displayLinkWithTarget:self selector:@selector(displayTick:)];
+  self.displayLink.paused = YES;
+  [self.displayLink addToRunLoop:NSRunLoop.mainRunLoop forMode:NSRunLoopCommonModes];
+  [self refreshDisplaySettings];
   [self startGame];
   self.saveNotice = [UILabel new];
   self.saveNotice.translatesAutoresizingMaskIntoConstraints = NO;
@@ -540,12 +611,17 @@ static int presentDialog(const char *title, const char *body, int trial, char *n
   self.hostTimer = [NSTimer scheduledTimerWithTimeInterval:.25
                                                    repeats:YES
                                                      block:^(NSTimer *timer) {
+#ifdef LEMON_BENCHMARK
+                                                       lemon_benchmark_poll();
+#endif
                                                        LemonGameState state;
                                                        lemon_game_state(&state);
                                                        [weakSelf.dashboard refresh:state];
                                                        [weakSelf updateGameLayout];
                                                        [weakSelf updateSaveFeedback];
+                                                       [weakSelf updateFPS];
                                                      }];
+  self.hostTimer.tolerance = .05;
 }
 - (void)updateSaveFeedback {
   NSString *directory =
@@ -593,6 +669,9 @@ static int presentDialog(const char *title, const char *body, int trial, char *n
     int result = lemon_run(image.UTF8String);
     dispatch_async(dispatch_get_main_queue(), ^{
       self.running = NO;
+      self.displayLink.paused = YES;
+      self.fpsLabel.text = @"0\nFPS";
+      self.hostTimer.fireDate = NSDate.distantFuture;
       self.game.hidden = YES;
       self.game.userInteractionEnabled = NO;
       self.status.hidden = NO;
@@ -625,15 +704,30 @@ static int presentDialog(const char *title, const char *body, int trial, char *n
                                          selector:@selector(audioConfigurationChanged:)
                                              name:AVAudioEngineConfigurationChangeNotification
                                            object:nil];
+  [NSNotificationCenter.defaultCenter addObserver:self
+                                         selector:@selector(powerStateChanged:)
+                                             name:NSProcessInfoPowerStateDidChangeNotification
+                                           object:nil];
   frameLock = [NSLock new];
-  [NSUserDefaults.standardUserDefaults
-      registerDefaults:@{@"musicVolume" : @1, @"effectsVolume" : @1, @"hapticsEnabled" : @NO}];
+  [NSUserDefaults.standardUserDefaults registerDefaults:@{
+    @"musicVolume" : @1,
+    @"effectsVolume" : @1,
+    @"hapticsEnabled" : @NO,
+    @"frameRate" : @120,
+    @"showFPS" : @YES
+  }];
   lemon_audio_levels([NSUserDefaults.standardUserDefaults floatForKey:@"musicVolume"],
                      [NSUserDefaults.standardUserDefaults floatForKey:@"effectsVolume"]);
   userMuted = [NSUserDefaults.standardUserDefaults boolForKey:@"soundMuted"];
+#ifdef LEMON_BENCHMARK
+  lemon_benchmark_prepare();
+#endif
   self.window = [[UIWindow alloc] initWithFrame:UIScreen.mainScreen.bounds];
   self.window.rootViewController = [LemonController new];
   [self.window makeKeyAndVisible];
+#ifdef LEMON_BENCHMARK
+  lemon_benchmark_start(self.window);
+#endif
 #ifdef LEMON_UI_SMOKE_TEST
   extern void lemon_ios_smoke_test(UIWindow * window);
   lemon_ios_smoke_test(self.window);
@@ -652,6 +746,7 @@ static int presentDialog(const char *title, const char *body, int trial, char *n
 }
 - (void)applicationDidBecomeActive:(UIApplication *)app {
   appActive = YES;
+  [controller refreshDisplaySettings];
   [controller refreshHostActivity];
 }
 - (void)audioInterrupted:(NSNotification *)note {
@@ -665,6 +760,11 @@ static int presentDialog(const char *title, const char *body, int trial, char *n
   dispatch_async(dispatch_get_main_queue(), ^{
     if (note.object == audioEngine)
       resumeAudio();
+  });
+}
+- (void)powerStateChanged:(NSNotification *)note {
+  dispatch_async(dispatch_get_main_queue(), ^{
+    [controller refreshDisplaySettings];
   });
 }
 @end

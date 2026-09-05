@@ -16,12 +16,59 @@ static uint32_t invoke(CPU *c, API api, int n, const uint32_t *a) {
 #define CALL(api, ...)                                                                             \
   invoke(&c, API_##api, sizeof((uint32_t[]){__VA_ARGS__}) / 4, (uint32_t[]){__VA_ARGS__})
 int main(void) {
+  const uint64_t frame = 1000000000ull / 60, start = 1000000000;
+  assert(native_tick_delay(start) == 0);
+  assert(native_tick_delay(start + 4000000) == frame - 4000000);
+  // Late rendering adds no extra wait; resume starts a fresh frame budget.
+  assert(native_tick_delay(start + 2 * frame + 1000000) == 0);
+  uint64_t resumed = start + 60000000000ull;
+  assert(native_tick_delay(resumed) == 0);
+  assert(native_tick_delay(resumed + 4000000) == frame - 4000000);
+  lemon_set_frame_rate(120);
+  assert(native_tick_delay(resumed + frame) == 0);
+  assert(native_tick_delay(resumed + frame + 4000000) == 1000000000ull / 120 - 4000000);
+  lemon_set_frame_rate(240); // Clamp unsupported targets to 120.
+  assert(atomic_load(&requested_frame_rate) == 120);
+  lemon_set_frame_rate(0); // Invalid/absent preference restores 60.
+  assert(native_tick_delay(resumed + 2 * frame) == 0);
   char temp[] = "/tmp/lemon-platform-XXXXXX";
   save_dir = mkdtemp(temp);
   assert(save_dir);
   CPU c = {0};
   c.mem_size = 0x10000000;
   c.mem = calloc(1, c.mem_size);
+  // Compare every possible 16-bit color against the existing generic decoder,
+  // including both row orders, odd addresses, padded rows, offsets and guards.
+  Gdi bitmap = {.width = 256, .height = 256, .stride = 514, .bits = 16, .pixels = 0x800001};
+  for (unsigned yy = 0; yy < 256; yy++)
+    for (unsigned xx = 0; xx < 256; xx++)
+      wr(&c, bitmap.pixels + yy * bitmap.stride + xx * 2, yy * 256 + xx, 16);
+  for (unsigned format = 0; format < 2; format++) {
+    bitmap.masks[0] = format ? 0xf800 : 0x7c00;
+    bitmap.masks[1] = format ? 0x7e0 : 0x3e0;
+    bitmap.masks[2] = 0x1f;
+    for (unsigned order = 0; order < 2; order++) {
+      bitmap.topdown = order;
+      memset(screen, 0x5a, sizeof(screen));
+      assert(blit_rgb16(&c, &bitmap, 3, 5, 256, 256, 0, 0));
+      for (unsigned yy = 0; yy < 256; yy++)
+        for (unsigned xx = 0; xx < 256; xx++)
+          assert(screen[(yy + 5) * 640 + xx + 3] == pixel(&c, &bitmap, xx, yy));
+      assert(screen[5 * 640 + 2] == 0x5a5a5a5a && screen[5 * 640 + 259] == 0x5a5a5a5a);
+      assert(blit_rgb16(&c, &bitmap, 0, 0, 240, 250, 7, 3));
+      for (unsigned yy = 0; yy < 250; yy++)
+        for (unsigned xx = 0; xx < 240; xx++)
+          assert(screen[yy * 640 + xx] == pixel(&c, &bitmap, xx + 7, yy + 3));
+    }
+  }
+  assert(!blit_rgb16(&c, &bitmap, -1, 0, 1, 1, 0, 0));
+  assert(!blit_rgb16(&c, &bitmap, 0, 0, 257, 256, 0, 0));
+  assert(!blit_rgb16(&c, &bitmap, 640, 0, 1, 1, 0, 0));
+  bitmap.masks[0] = 0xff0000;
+  assert(!blit_rgb16(&c, &bitmap, 0, 0, 1, 1, 0, 0));
+  bitmap.masks[0] = 0xf800;
+  bitmap.pixels = UINT32_MAX - 4;
+  assert(!blit_rgb16(&c, &bitmap, 0, 0, 1, 1, 0, 0));
   uint32_t key = text(&c, "Software\\LemonadeTest"), name = text(&c, "Counter"),
            value = alloc(&c, 4), handle_out = alloc(&c, 4), size = alloc(&c, 4),
            type = alloc(&c, 4), dest = alloc(&c, 8), disp = alloc(&c, 4);
@@ -84,14 +131,16 @@ int main(void) {
   new_window(0, 0, 0);
   post(0, 1, 0, 0);
   reset_platform();
+  assert(!next_native_tick);
   assert(!command_line && !environment_wide && !environment_ansi);
   assert(!allocation_count && heap_next == 0x1000000 && !window_count && !message_tail);
   assert(!reg_count);
   registry_load();
   assert(reg_count);
-  printf("PASS: persistence, buffer sizes, realloc, 10000 allocation/free cycles, guest exit, "
-         "restart reset (%s)\n",
-         temp);
+  printf(
+      "PASS: persistence, buffer sizes, realloc, 10000 allocation/free cycles, guest exit, "
+      "restart reset, RGB555/565 pixel conversion, 60/120 Hz pacing and late-frame recovery (%s)\n",
+      temp);
   free(c.mem);
   return 0;
 }

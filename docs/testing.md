@@ -13,6 +13,10 @@ python3 tools/build.py --port web
 python3 tools/build.py --port ios --smoke-test
 ```
 
+For repeatable device CPU and frame measurements, see
+[Performance and refresh rates](performance.md). Profiling builds use a separate
+save container, and their reports stay under the ignored `build/` directory.
+
 The C unit checks use AddressSanitizer/UndefinedBehaviorSanitizer. They cover audio
 mixing and separate volume levels, pause/resume, registry persistence, allocation
 reuse, portable save validation, interrupted writes, and recovery backups.
@@ -62,6 +66,12 @@ Fit, and Original at the pane edges and while a field is active. An outside tap
 must dismiss the original text field's keyboard without pressing another control.
 
 Change layout, mute, music/ambience, and effects; relaunch and confirm persistence.
+Switch between 60 and 120 FPS while playing. Confirm the FPS counter reports new
+game frames, drops to zero when paused, and resumes without including paused time
+in its average. Hide the counter, then hide/restore the complete toolbar; neither
+action should change the game bounds. Check both display preferences after a
+relaunch, on a 60 Hz display, and in Low Power Mode. A 120 FPS preference must not
+be reported as a measured 120 FPS result.
 Listen to looping and one-shot sounds independently. On physical iPhone, enable
 haptics and pause, then disable haptics and repeat. Simulator
 checks cannot prove physical keyboard presentation, audible output, or haptic feel.

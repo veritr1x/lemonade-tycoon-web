@@ -7,6 +7,21 @@ User-visible changes are grouped by port. iOS build numbers match the app's
 
 ### iOS and web (local preview)
 
+- Accelerated the original plain and transparent sprite rows and RGB555/565 frame conversion,
+  retaining the original fallback for other formats, scaling, overlap, and bounds.
+  Added comparisons against the original instructions and every 16-bit color.
+- Removed an extra 1 ms sleep after late native frames so rendering can recover
+  toward the selected refresh rate without an added delay.
+- Added a remembered 60/120 FPS limit and an optional live FPS counter. The counter
+  counts new game frames and hides with the floating controls. 120 FPS is a target;
+  actual delivery depends on the device, display, browser, and scene.
+- Added native ProMotion display scheduling and stopped display callbacks and HUD
+  polling while paused or inactive. iOS respects the screen's refresh rate and
+  Low Power Mode. The local preview is now build 17.
+- Reduced browser scheduling clock checks.
+  Unchanged cash/price labels no longer trigger repeated layout work.
+- Added an isolated, repeatable iPhone/iPad performance workload and a
+  [profiling guide](docs/performance.md) for comparing CPU use and frame delivery.
 - Removed the experimental larger Recipe and Supplies forms. Adaptive now shows
   the complete original controls column below the street in portrait and beside
   it in widescreen. All panes retain the original proportions and every game
@@ -18,7 +33,6 @@ User-visible changes are grouped by port. iOS build numbers match the app's
   during interaction.
 - Made the top/side toolbar float over the full screen. Hide controls collapses it
   to a small restore button; the choice persists without resizing the game.
-  The iOS local preview is build 15.
 - Added an 8-point inset and a thin rounded border on iPhone, keeping the game
   inside the safe area and clear of the camera and home indicator.
 - Added portable save export/import, a previous-checkpoint backup, and a separate

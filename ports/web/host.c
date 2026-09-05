@@ -97,8 +97,11 @@ EMSCRIPTEN_KEEPALIVE int lemon_web_start(void) {
 EMSCRIPTEN_KEEPALIVE void lemon_web_step(void) {
   if (!web_running || !web_active)
     return;
+  if (browser_ready_at && lemon_monotonic_ns() < browser_ready_at)
+    return;
   browser_yield = 0;
   double until = emscripten_get_now() + 8;
+  unsigned dispatches = 0;
   do {
     if (web_cpu.fault || web_cpu.halted || web_pc == RETURN_SENTINEL) {
       int failed = web_cpu.fault || (web_cpu.halted && web_cpu.exit_code);
@@ -110,11 +113,15 @@ EMSCRIPTEN_KEEPALIVE void lemon_web_step(void) {
       return;
     }
     web_pc = game_dispatch(&web_cpu, web_pc);
-  } while (!browser_yield && emscripten_get_now() < until);
+    // Crossing into JS for a timestamp on every tiny translated call dominated
+    // the profile. Check once per 32 calls; Sleep still yields immediately.
+    // A single translated call is non-preemptible, as before.
+  } while (!browser_yield && (++dispatches % 32 || emscripten_get_now() < until));
 }
 
 EMSCRIPTEN_KEEPALIVE void lemon_web_active(int active) {
   web_active = !!active;
+  browser_ready_at = 0;
   lemon_set_active(active);
 }
 
@@ -126,6 +133,8 @@ EMSCRIPTEN_KEEPALIVE void lemon_web_flush_input(void) {
   double until = emscripten_get_now() + 50;
   unsigned before = frame_count;
   do {
+    // A real input gesture can bypass the frame limiter to open the keyboard.
+    browser_ready_at = 0;
     lemon_web_step();
   } while (web_running && web_active &&
            (!browser_yield || message_head < message_tail || frame_count == before) &&

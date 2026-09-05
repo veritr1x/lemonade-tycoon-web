@@ -42,6 +42,12 @@ The layout menu is available in both orientations:
 
 The choice is saved on the device.
 
+**Settings & saves** also offers 60 or 120 FPS and a live FPS counter. The default
+is up to 120 FPS; choose 60 to reduce power use. ProMotion timing follows the rate
+iOS grants, capped by the display and by 60 in Low Power Mode. Actual game FPS can
+be lower than the selected limit. The counter hides with the floating toolbar and
+can also be hidden independently. See the [profiling guide](../../docs/performance.md).
+
 The compact native toolbar provides pause/resume, sound, and layout controls
 with VoiceOver labels and 48-point touch targets. It has no large title, including
 at accessibility text sizes. Loading and restart text use Dynamic Type. The original
@@ -95,8 +101,10 @@ app bundles, and IPA archives are excluded from Git.
 
 ## Implementation and checks
 
-The engine runs on a worker thread. Frame callbacks copy pixels before scheduling
-UIKit updates on the main thread. `GameView.m` uses the source/display rectangles in
+The engine runs on a worker thread. Frame callbacks replace one pending pixel
+buffer; a single `CADisplayLink` presents the latest buffer on the main thread.
+Both the display link and HUD timer stop while paused or inactive.
+`GameView.m` uses the source/display rectangles in
 `layout.h` for both drawing and touch mapping into the original 640×480 coordinates,
 and forwards `UIKeyInput` characters. Audio session changes run on the main
 thread; AVAudioEngine renders the shared PCM mixer. Backgrounding pauses the engine

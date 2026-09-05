@@ -38,7 +38,12 @@ The adapter reads arguments from the guest stack and applies stdcall cleanup wit
 allocations. A window callback can re-enter translated code through `game_run`.
 
 File access is limited to resource and save directories. GDI operations eventually
-produce a 640×480 RGB framebuffer. `engine/registry.h` stores registry/profile values
+produce a 640×480 RGB framebuffer. Common unscaled RGB555/565 frames use an exact
+color lookup table; other blits retain the generic decoder. `engine/renderer.h`
+accelerates two original pixel-row loops with checked bounds and equivalent
+registers, flags, and instruction counts. The generated instructions remain the
+fallback for overlap, unusual strides, or short execution budgets.
+`engine/registry.h` stores registry/profile values
 in a sandbox file and replaces that file through a temporary write and rename.
 
 ## Cooperative browser loop

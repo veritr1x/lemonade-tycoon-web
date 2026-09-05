@@ -111,7 +111,43 @@ static NSString *saveDirectory(void) {
   hapticRow.alignment = UIStackViewAlignmentCenter;
   hapticRow.spacing = 16;
   [self.content addArrangedSubview:hapticRow];
+  [self.content addArrangedSubview:[self text:@"Frame rate"]];
+  UISegmentedControl *rate = [[UISegmentedControl alloc] initWithItems:@[ @"60 FPS", @"120 FPS" ]];
+  rate.selectedSegmentIndex =
+      [NSUserDefaults.standardUserDefaults integerForKey:@"frameRate"] == 60 ? 0 : 1;
+  rate.accessibilityLabel = @"Frame rate limit";
+  [rate.heightAnchor constraintGreaterThanOrEqualToConstant:44].active = YES;
+  [rate addTarget:self
+                action:@selector(frameRateChanged:)
+      forControlEvents:UIControlEventValueChanged];
+  [self.content addArrangedSubview:rate];
+  [self.content
+      addArrangedSubview:
+          [self text:@"120 FPS uses more power and needs a supported display. Actual FPS depends "
+                     @"on the scene and device. Low Power Mode limits the rate to 60 FPS."]];
+  UISwitch *counter = [UISwitch new];
+  counter.on = [NSUserDefaults.standardUserDefaults boolForKey:@"showFPS"];
+  counter.accessibilityLabel = @"Show FPS counter";
+  [counter addTarget:self
+                action:@selector(fpsChanged:)
+      forControlEvents:UIControlEventValueChanged];
+  UIStackView *fpsRow =
+      [[UIStackView alloc] initWithArrangedSubviews:@[ [self text:@"Show FPS counter"], counter ]];
+  fpsRow.alignment = UIStackViewAlignmentCenter;
+  fpsRow.spacing = 16;
+  [self.content addArrangedSubview:fpsRow];
   [self refresh];
+}
+- (void)frameRateChanged:(UISegmentedControl *)control {
+  [NSUserDefaults.standardUserDefaults setInteger:control.selectedSegmentIndex ? 120 : 60
+                                           forKey:@"frameRate"];
+  if (self.displaySettingsChanged)
+    self.displaySettingsChanged();
+}
+- (void)fpsChanged:(UISwitch *)control {
+  [NSUserDefaults.standardUserDefaults setBool:control.on forKey:@"showFPS"];
+  if (self.displaySettingsChanged)
+    self.displaySettingsChanged();
 }
 - (void)volumeChanged:(UISlider *)slider {
   [NSUserDefaults.standardUserDefaults setFloat:slider.value

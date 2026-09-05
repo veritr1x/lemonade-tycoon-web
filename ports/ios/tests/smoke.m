@@ -9,6 +9,7 @@
 @protocol LemonLayoutSelection
 - (void)selectGameLayout:(NSInteger)mode;
 - (void)resizePanes:(UIPanGestureRecognizer *)gesture;
+- (void)refreshDisplaySettings;
 @end
 
 @interface TestTouch : UITouch
@@ -78,11 +79,33 @@ static void checkHostControls(void) {
   UIViewController *controller = testWindow.rootViewController;
   UIButton *pause = [controller valueForKey:@"pauseButton"];
   [pause sendActionsForControlEvents:UIControlEventTouchUpInside];
+  CADisplayLink *link = [controller valueForKey:@"displayLink"];
+  NSTimer *hostTimer = [controller valueForKey:@"hostTimer"];
+  require(link.paused && [hostTimer.fireDate timeIntervalSinceNow] > 1000000,
+          @"Pause suspends display callbacks and HUD polling");
   require(!testGame.userInteractionEnabled &&
               [pause.accessibilityLabel isEqualToString:@"Resume game"],
           @"Pause disables game input and exposes Resume");
   [pause sendActionsForControlEvents:UIControlEventTouchUpInside];
   require(testGame.userInteractionEnabled, @"Resume restores game input");
+  require(!link.paused && [hostTimer.fireDate timeIntervalSinceNow] < 1,
+          @"Resume restores the existing display link and HUD timer");
+  [NSUserDefaults.standardUserDefaults setInteger:60 forKey:@"frameRate"];
+  [(id<LemonLayoutSelection>)controller refreshDisplaySettings];
+  require(link.preferredFrameRateRange.maximum <= 60, @"60 FPS preference limits display refresh");
+  [NSUserDefaults.standardUserDefaults setInteger:120 forKey:@"frameRate"];
+  [(id<LemonLayoutSelection>)controller refreshDisplaySettings];
+  require(link.preferredFrameRateRange.maximum <= testWindow.screen.maximumFramesPerSecond &&
+              [NSUserDefaults.standardUserDefaults integerForKey:@"frameRate"] == 120,
+          @"120 FPS preference is remembered and respects the screen limit");
+  UILabel *fps = [controller valueForKey:@"fpsLabel"];
+  [NSUserDefaults.standardUserDefaults setBool:NO forKey:@"showFPS"];
+  [(id<LemonLayoutSelection>)controller refreshDisplaySettings];
+  require(fps.hidden, @"FPS counter can be hidden independently");
+  [NSUserDefaults.standardUserDefaults setBool:YES forKey:@"showFPS"];
+  [(id<LemonLayoutSelection>)controller refreshDisplaySettings];
+  require(!fps.hidden && [fps.text containsString:@"FPS"],
+          @"FPS counter returns inside the floating toolbar");
   [(id<LemonLayoutSelection>)controller selectGameLayout:2];
   [testWindow layoutIfNeeded];
   require(!testGame.portraitPanels && testGame.preserveAspectRatio,

@@ -379,6 +379,14 @@ def lift(i, page):
     return f"fault(c,0x{i.address:x});return 0;"
 
 
+# Fast paths depend on these exact original loops and their flag semantics.
+# Check before writing any generated files when a contributor changes the input.
+assert b[0x433FF9 - BASE : 0x434009 - BASE] == bytes.fromhex(
+    "668b0b03d866890a8d0c3f03d14d75f0"
+), "Review the row-copy fast path for this original executable"
+assert b[0x4346B5 - BASE : 0x4346DE - BASE] == bytes.fromhex(
+    "668b13663b54241074128b6c241481e2ffff0000668b5455006689178b54242003d903d203fa4875d7"
+), "Review the palette-row fast path for this original executable"
 out = Path("engine/generated")
 out.mkdir(exist_ok=True)
 pages = collections.defaultdict(list)
@@ -387,7 +395,7 @@ for i in instructions.values():
 for page, entries in sorted(pages.items()):
     entries.sort(key=lambda i: i.address)
     lines = [
-        '#include "../runtime.h"',
+        '#include "../renderer.h"' if page == 0x434000 else '#include "../runtime.h"',
         f"uint32_t page_{page:x}(CPU*c,uint32_t pc){{",
         "switch(pc){",
     ]
@@ -405,16 +413,23 @@ for page, entries in sorted(pages.items()):
             body = (
                 f"native_text_focus(c,c->ecx,{1 if i.address==0x437160 else 0});" + body
             )
+        fast_path = (
+            "if(lemon_palette_span(c)){goto L4346de;}" if i.address == 0x4346B5 else ""
+        )
         lines.append(
-            f"L{i.address:x}:{{if(c->fault||++c->steps>c->limit){{fault(c,0x{i.address:x});return 0;}}/* {i.mnemonic} {i.op_str} */{body}}}"
+            f"L{i.address:x}:{{{fast_path}if(c->fault||++c->steps>c->limit){{fault(c,0x{i.address:x});return 0;}}/* {i.mnemonic} {i.op_str} */{body}}}"
         )
     lines += ["}"]
     (out / f"page_{page:x}.c").write_text("\n".join(lines) + "\n")
-lines = ['#include "../runtime.h"'] + [
+lines = ['#include "../renderer.h"'] + [
     f"extern uint32_t page_{p:x}(CPU*,uint32_t);" for p in sorted(pages)
 ]
 lines += (
-    ["uint32_t game_dispatch(CPU*c,uint32_t pc){switch(pc&~4095u){"]
+    [
+        "uint32_t game_dispatch(CPU*c,uint32_t pc){",
+        "if(pc==0x434001u && lemon_copy_span(c))return 0x434009u;",
+        "switch(pc&~4095u){",
+    ]
     + [f"case 0x{p:x}:return page_{p:x}(c,pc);" for p in sorted(pages)]
     + ["default:return native_api(c,pc);}}"]
 )

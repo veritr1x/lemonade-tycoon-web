@@ -60,6 +60,7 @@
         </button>
       </nav>
     </header>
+    <span id="fps" aria-label="Game frame rate">0 FPS</span>
     <button
       id="show-controls"
       aria-label="Show controls"
@@ -124,6 +125,24 @@
         <h2 id="settings-title">Settings & saves</h2>
         <button id="close-settings">Done</button>
       </div>
+      <section>
+        <h3>Display</h3>
+        <label
+          >Frame rate limit
+          <select id="frame-rate">
+            <option value="60">60 FPS</option>
+            <option value="120">120 FPS</option>
+          </select>
+        </label>
+        <p>
+          120 FPS uses more power and needs a supported display and browser.
+          Actual FPS depends on the scene and device.
+        </p>
+        <label
+          ><input type="checkbox" id="show-fps" checked /> Show FPS
+          counter</label
+        >
+      </section>
       <section>
         <h3>Audio</h3>
         <label class="volume"

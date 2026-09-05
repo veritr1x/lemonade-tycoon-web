@@ -1,4 +1,4 @@
-#include "../runtime.h"
+#include "../renderer.h"
 uint32_t page_434000(CPU*c,uint32_t pc){
 switch(pc){
 case 0x434001:goto L434001;
@@ -2063,7 +2063,7 @@ L4346ac:{if(c->fault||++c->steps>c->limit){fault(c,0x4346ac);return 0;}/* test e
 L4346ae:{if(c->fault||++c->steps>c->limit){fault(c,0x4346ae);return 0;}/* jle 0x4346de */if(c->zf||(c->sf!=c->of)){goto L4346de;}goto L4346b0;}
 L4346b0:{if(c->fault||++c->steps>c->limit){fault(c,0x4346b0);return 0;}/* lea ecx, [esi + esi] */c->ecx=((uint32_t)(0x0u+c->esi+(c->esi*1u)));goto L4346b3;}
 L4346b3:{if(c->fault||++c->steps>c->limit){fault(c,0x4346b3);return 0;}/* mov eax, edx */c->eax=(c->edx);goto L4346b5;}
-L4346b5:{if(c->fault||++c->steps>c->limit){fault(c,0x4346b5);return 0;}/* mov dx, word ptr [ebx] */c->edx=(c->edx&~0xffffu)|(((rd(c,(uint32_t)(0x0u+c->ebx),16))&65535u)<<0);goto L4346b8;}
+L4346b5:{if(lemon_palette_span(c)){goto L4346de;}if(c->fault||++c->steps>c->limit){fault(c,0x4346b5);return 0;}/* mov dx, word ptr [ebx] */c->edx=(c->edx&~0xffffu)|(((rd(c,(uint32_t)(0x0u+c->ebx),16))&65535u)<<0);goto L4346b8;}
 L4346b8:{if(c->fault||++c->steps>c->limit){fault(c,0x4346b8);return 0;}/* cmp dx, word ptr [esp + 0x10] */uint32_t v=alu(c,((c->edx>>0)&65535u),rd(c,(uint32_t)(0x10u+c->esp),16),16,1);goto L4346bd;}
 L4346bd:{if(c->fault||++c->steps>c->limit){fault(c,0x4346bd);return 0;}/* je 0x4346d1 */if(c->zf){goto L4346d1;}goto L4346bf;}
 L4346bf:{if(c->fault||++c->steps>c->limit){fault(c,0x4346bf);return 0;}/* mov ebp, dword ptr [esp + 0x14] */c->ebp=(rd(c,(uint32_t)(0x14u+c->esp),32));goto L4346c3;}

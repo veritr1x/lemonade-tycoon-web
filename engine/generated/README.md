@@ -3,6 +3,11 @@
 Do not hand-edit or reformat these files. `page_*.c` preserves original addresses
 and disassembly comments so faults can be traced back to an instruction. The
 dispatcher routes between pages; `imports.h` defines the Windows API thunks.
+The generated code also recognizes the measured plain and color-keyed 16-bit
+row-copy hotspots. Their checked implementations live in `engine/renderer.h`;
+other cases run the original instructions. The generator verifies each loop's
+original bytes before adding a hook. Differential tests compare pixels,
+registers, flags, and step counts with the original x86 loops.
 
 From the repository root, with the development requirements installed:
 

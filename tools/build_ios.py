@@ -31,7 +31,14 @@ parser.add_argument(
     action="store_true",
     help="Build a separate simulator app that checks host interactions",
 )
+parser.add_argument(
+    "--benchmark",
+    action="store_true",
+    help="Build an isolated app that measures a repeatable gameplay workload",
+)
 args = parser.parse_args()
+if args.smoke_test and args.benchmark:
+    parser.error("Choose --smoke-test or --benchmark")
 if args.jobs < 1:
     parser.error("--jobs must be positive")
 if args.profile:
@@ -42,6 +49,8 @@ if args.smoke_test:
     if args.device:
         parser.error("--smoke-test is simulator-only")
     bundle_id += ".smoketest"
+if args.benchmark:
+    bundle_id += ".benchmark"
 entitlements = None
 # Signing inputs stay on the contributor's machine; only generated output uses them.
 if args.device:
@@ -86,6 +95,10 @@ compiler_version = subprocess.check_output([compiler, "--version"])
 output = ROOT / "build" / ("ios-device" if args.device else "ios-simulator")
 if args.smoke_test:
     output = ROOT / "build/ios-smoke"
+if args.benchmark:
+    output = ROOT / (
+        "build/ios-benchmark-device" if args.device else "build/ios-benchmark"
+    )
 objects = output / "objects"
 objects.mkdir(parents=True, exist_ok=True)
 app = output / "LemonadeTycoon.app"
@@ -114,6 +127,9 @@ flags = [
 if args.smoke_test:
     sources.append(Path("ports/ios/tests/smoke.m"))
     flags.append("-DLEMON_UI_SMOKE_TEST")
+if args.benchmark:
+    sources.append(Path("ports/ios/tests/performance.m"))
+    flags.append("-DLEMON_BENCHMARK")
 headers = b"".join(p.read_bytes() for p in sorted(Path("engine").rglob("*.h")))
 headers += b"".join(p.read_bytes() for p in sorted(Path("ports/ios").glob("*.h")))
 
@@ -195,7 +211,7 @@ info = dict(
     CFBundleDisplayName="Lemonade Tycoon",
     CFBundleExecutable="LemonadeTycoon",
     CFBundlePackageType="APPL",
-    CFBundleVersion="15",
+    CFBundleVersion="17",
     CFBundleShortVersionString="0.1",
     MinimumOSVersion="17.0",
     UIDeviceFamily=[1, 2],
@@ -207,6 +223,7 @@ info = dict(
         "UIInterfaceOrientationLandscapeRight",
     ],
     UIStatusBarHidden=True,
+    CADisableMinimumFrameDurationOnPhone=True,
     CFBundleSupportedPlatforms=["iPhoneOS" if args.device else "iPhoneSimulator"],
 )
 info.update(plistlib.loads(icon_info.read_bytes()))

@@ -77,6 +77,23 @@ nav button {
 nav select {
   font-size: 14px;
 }
+#fps {
+  position: absolute;
+  z-index: 4;
+  top: calc(max(8px, env(safe-area-inset-top)) + 70px);
+  right: max(8px, env(safe-area-inset-right));
+  min-width: 50px;
+  padding: 5px;
+  border: 1px solid #ffffff26;
+  border-radius: 8px;
+  background: #102419d9;
+  pointer-events: none;
+  text-align: center;
+  white-space: normal;
+  font-size: 12px;
+  font-variant-numeric: tabular-nums;
+  color: #f5d84a;
+}
 button:focus-visible,
 select:focus-visible,
 input:focus-visible,

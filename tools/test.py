@@ -104,6 +104,8 @@ def integration(compiler):
         [
             compiler,
             "-dynamiclib" if mac else "-shared",
+            "-O1",
+            "engine/tests/renderer_oracle.c",
             *map(str, built),
             "-lm",
             "-pthread",
@@ -124,6 +126,7 @@ if __name__ == "__main__":
     if not compiler:
         parser.error("Install Clang or set CC to a compatible C compiler.")
     cases = {
+        "renderer": [],
         "audio": ["engine/audio.c"],
         "lifecycle": ["engine/lifecycle.c"],
         "runtime_exit": ["engine/runtime.c"],

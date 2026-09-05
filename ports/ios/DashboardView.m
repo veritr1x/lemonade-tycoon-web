@@ -129,8 +129,11 @@
   self.controls.frameImage = image;
 }
 - (void)refresh:(LemonGameState)state {
-  self.hud.text = [NSString stringWithFormat:@"Cash $%.2f  ·  Price $%.2f / cup",
-                                             state.cash_cents / 100.0, state.price_cents / 100.0];
+  NSString *text = [NSString stringWithFormat:@"Cash $%.2f  ·  Price $%.2f / cup",
+                                              state.cash_cents / 100.0, state.price_cents / 100.0];
+  if ([self.hud.text isEqualToString:text])
+    return;
+  self.hud.text = text;
   [self setNeedsLayout];
 }
 - (void)setSplit:(CGFloat)value wide:(BOOL)wide save:(BOOL)save {

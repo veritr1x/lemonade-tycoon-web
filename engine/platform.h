@@ -14,5 +14,7 @@ void lemon_touch(int x, int y, int phase);
 void lemon_key(unsigned character);
 void lemon_request_quit(void);
 void lemon_set_active(int active);
+/* Limit redraws without changing the simulation clock. Hosts may select 1–120 Hz. */
+void lemon_set_frame_rate(unsigned frames_per_second);
 int lemon_run(const char *image_path);
 #endif

@@ -1,4 +1,4 @@
-#include "../runtime.h"
+#include "../renderer.h"
 extern uint32_t page_401000(CPU*,uint32_t);
 extern uint32_t page_402000(CPU*,uint32_t);
 extern uint32_t page_403000(CPU*,uint32_t);
@@ -96,7 +96,9 @@ extern uint32_t page_45e000(CPU*,uint32_t);
 extern uint32_t page_45f000(CPU*,uint32_t);
 extern uint32_t page_460000(CPU*,uint32_t);
 extern uint32_t page_461000(CPU*,uint32_t);
-uint32_t game_dispatch(CPU*c,uint32_t pc){switch(pc&~4095u){
+uint32_t game_dispatch(CPU*c,uint32_t pc){
+if(pc==0x434001u && lemon_copy_span(c))return 0x434009u;
+switch(pc&~4095u){
 case 0x401000:return page_401000(c,pc);
 case 0x402000:return page_402000(c,pc);
 case 0x403000:return page_403000(c,pc);

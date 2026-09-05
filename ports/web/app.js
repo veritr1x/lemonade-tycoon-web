@@ -27,6 +27,39 @@ let game,
   nextAudio = 0,
   muted = readPreference("soundMuted", false) === true,
   frames = 0;
+let animationFrame = null,
+  hostTimer = null;
+let fpsStarted = performance.now(),
+  fpsFrames = 0,
+  presentedFrames = 0,
+  frameReady = false;
+const frameRate = $("frame-rate"),
+  showFPS = $("show-fps");
+frameRate.value = readPreference("frameRate", 120) === 60 ? "60" : "120";
+showFPS.checked = readPreference("showFPS", true) !== false;
+$("fps").hidden = !showFPS.checked;
+frameRate.addEventListener("change", () => {
+  const rate = Number(frameRate.value);
+  writePreference("frameRate", rate);
+  game?._lemon_set_frame_rate(rate);
+});
+showFPS.addEventListener("change", () => {
+  writePreference("showFPS", showFPS.checked);
+  $("fps").hidden = !showFPS.checked || $("controls").hidden;
+});
+function updateFPS() {
+  const now = performance.now(),
+    elapsed = now - fpsStarted;
+  if (elapsed < 1000) return;
+  const fps = Math.round(((presentedFrames - fpsFrames) * 1000) / elapsed);
+  $("fps").textContent = `${fps} FPS`;
+  $("fps").setAttribute(
+    "aria-label",
+    `Game frame rate: ${fps} frames per second`,
+  );
+  fpsStarted = now;
+  fpsFrames = presentedFrames;
+}
 // Track scheduled audio so pause, mute, and quit can stop every queued sample.
 const sources = new Set();
 const surface = new GameSurface(canvas, cancelPointer);
@@ -78,6 +111,7 @@ function setControlsHidden(hidden, focus = false) {
   cancelPointer();
   keyboard.blur();
   $("controls").hidden = hidden;
+  $("fps").hidden = hidden || !showFPS.checked;
   $("show-controls").hidden = !hidden;
   $("show-controls").setAttribute("aria-expanded", String(!hidden));
   document.body.classList.toggle("controls-hidden", hidden);
@@ -159,6 +193,10 @@ function cancelPointer() {
   pointer = null;
 }
 function refreshActivity() {
+  fpsStarted = performance.now();
+  fpsFrames = presentedFrames;
+  $("fps").textContent = "0 FPS";
+  $("fps").setAttribute("aria-label", "Game frame rate: 0 frames per second");
   active = !document.hidden && !userPaused;
   if (!active) {
     cancelPointer();
@@ -177,6 +215,8 @@ function refreshActivity() {
     stopAudio();
     audio?.suspend();
   } else if (audio) audio.resume().catch(() => {});
+  updateScheduling();
+  game?._lemon_web_read_state();
   layout();
 }
 $("pause").addEventListener("click", () => {
@@ -187,20 +227,45 @@ $("pause").addEventListener("click", () => {
 keyboard.addEventListener("focus", layout);
 keyboard.addEventListener("blur", layout);
 // Each animation frame gives the translated runtime a bounded slice of main-thread time.
+// Cancel both recurring callbacks while paused, hidden, or closed. Resuming owns
+// exactly one frame request and one HUD/save timer, even after repeated toggles.
+function updateScheduling() {
+  if (running && active) {
+    if (animationFrame === null) animationFrame = requestAnimationFrame(step);
+    if (hostTimer === null)
+      hostTimer = setInterval(() => {
+        game._lemon_web_read_state();
+        updateFPS();
+      }, 250);
+  } else {
+    if (animationFrame !== null) cancelAnimationFrame(animationFrame);
+    if (hostTimer !== null) clearInterval(hostTimer);
+    animationFrame = hostTimer = null;
+  }
+}
 function step() {
+  animationFrame = null;
   try {
     if (running && active) {
       game._lemon_web_step();
       pumpAudio();
+      // Several guest blits can occur in one browser frame. Count one new
+      // presentation, not every intermediate bitmap or an unchanged canvas.
+      if (frameReady) {
+        presentedFrames++;
+        canvas.dataset.presentedFrames = presentedFrames;
+        frameReady = false;
+      }
     }
   } catch (error) {
     fail(error);
   }
-  requestAnimationFrame(step);
+  updateScheduling();
 }
 function fail(error) {
   console.error(error);
   running = false;
+  updateScheduling();
   stopAudio();
   cover.hidden = false;
   status.textContent =
@@ -216,8 +281,12 @@ try {
       const changed =
         gameState?.loaded !== state.loaded || gameState?.modal !== state.modal;
       gameState = state;
-      $("stand-cash").textContent = `Cash ${money(state.cash)}`;
-      $("stand-price").textContent = `Price ${money(state.price)} / cup`;
+      const cash = `Cash ${money(state.cash)}`;
+      const price = `Price ${money(state.price)} / cup`;
+      if ($("stand-cash").textContent !== cash)
+        $("stand-cash").textContent = cash;
+      if ($("stand-price").textContent !== price)
+        $("stand-price").textContent = price;
       if (changed) layout();
     },
     onSaveState(state) {
@@ -237,6 +306,7 @@ try {
     },
     onGameFrame(pixels, w, h) {
       surface.frame(pixels, w, h);
+      frameReady = true;
       frames++;
       canvas.dataset.frames = frames;
       if (running) cover.hidden = true;
@@ -287,7 +357,11 @@ try {
       nextAudio += left.length / 44100;
     },
   });
-  if (!game._lemon_web_read_state || !game._lemon_audio_levels)
+  if (
+    !game._lemon_web_read_state ||
+    !game._lemon_audio_levels ||
+    !game._lemon_set_frame_rate
+  )
     throw new Error(
       "The page needs its matching runtime. Build this checkout with tools/build.py --port web.",
     );
@@ -305,13 +379,12 @@ try {
   }
   status.textContent = "Your lemonade business is ready.";
   applyVolumes();
+  game._lemon_set_frame_rate(Number(frameRate.value));
   updateSoundButton();
   refreshActivity();
   play.disabled = false;
   layout();
-  requestAnimationFrame(step);
   setupOffline();
-  setInterval(() => game._lemon_web_read_state(), 250);
 } catch (error) {
   fail(error);
 }
@@ -342,6 +415,7 @@ play.addEventListener("click", () => {
     if (game._lemon_web_start()) {
       running = true;
       game._lemon_web_step();
+      updateScheduling();
     } else fail("Startup failed");
   } catch (error) {
     fail(error);
