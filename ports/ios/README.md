@@ -5,6 +5,27 @@ ARM64 app for iPhone and iPad running iOS 17 or later. It uses the same translat
 game code and assets as the web port, with saves in the app's Documents directory.
 Text entry automatically opens the software keyboard; tapping outside dismisses it.
 
+## Portrait prototype
+
+Portrait stacks the original **right column on top** and **left column below** in
+equal-height panes. Both columns stay visible and interactive, including their top
+status bars and bottom game buttons. Images keep their original proportions, with
+space at the sides when needed. The layout button returns to a single full-game
+view for comparison or wide menus; landscape always uses that view. Both panes
+send input to the same running game, so changing layout preserves progress.
+While typing, the pane containing the active field brings it into view above the
+docked keyboard. Tapping outside dismisses the keyboard and restores both columns.
+
+The native toolbar provides pause/resume, sound, and layout controls with VoiceOver
+labels, large touch targets, and Dynamic Type for interface text. The original
+bitmap game menus are not yet independently accessible to VoiceOver, and their text
+does not follow Dynamic Type. Native recipe/supplies forms remain future work.
+
+Frame delivery retains only the latest pending frame. Touch cancellation releases
+held game controls, including on rotation and backgrounding. Pausing or an audio
+interruption freezes the shared game clock. iOS play already works offline with
+bundled assets; this prototype does not add mid-day recovery checkpoints.
+
 ## Simulator
 
 Use an Apple Silicon Mac with full Xcode installed and an iOS Simulator runtime.
@@ -46,8 +67,9 @@ app bundles, and IPA archives are excluded from Git.
 ## Implementation and checks
 
 The engine runs on a worker thread. Frame callbacks copy pixels before scheduling
-UIKit updates on the main thread. `LemonView` scales touches into the original 640×480
-coordinates and forwards `UIKeyInput` characters. Audio session changes run on the main
+UIKit updates on the main thread. `GameView.m` uses the source/display rectangles in
+`layout.h` for both drawing and touch mapping into the original 640×480 coordinates,
+and forwards `UIKeyInput` characters. Audio session changes run on the main
 thread; AVAudioEngine renders the shared PCM mixer. Backgrounding pauses the engine
 clock, and a normal game exit offers **Play again** with the existing saves.
 
@@ -56,3 +78,20 @@ also launch the app and check career creation, keyboard appearance/editing/dismi
 sound, background/resume, save/relaunch, and Quit → Play again. Simulator checks do not
 establish physical-device keyboard or audio behavior. Broad iPad layout and gameplay
 coverage still need device testing.
+
+Run `python3 tools/test_ios.py` on macOS for sanitized coordinate/crop checks.
+For a simulator host smoke test, use a disposable test app:
+
+```sh
+python3 tools/build.py --port ios --smoke-test
+# Remove only the test app before repeating a run, so its save slots start empty.
+xcrun simctl uninstall booted local.lemonade.tycoon.smoketest
+xcrun simctl install booted build/ios-smoke/LemonadeTycoon.app
+xcrun simctl launch --console booted local.lemonade.tycoon.smoketest
+```
+
+The test app uses synthesized UIKit touch calls to exercise pane mapping, character
+entry, outside dismissal, reopening, Return, touch release, pause/resume, and layout
+switching. It writes `smoke.json` and screenshots to its own Documents directory.
+These checks do not replace physical touch, VoiceOver, or software-keyboard testing.
+The smoke-test code is excluded from normal builds and cannot target a device.

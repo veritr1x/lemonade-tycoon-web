@@ -26,6 +26,11 @@ parser.add_argument(
 parser.add_argument("--udid", help="Verify that the profile includes this device")
 parser.add_argument("--bundle-id", default="local.lemonade.tycoon")
 parser.add_argument("--jobs", type=int, default=min(6, os.cpu_count() or 2))
+parser.add_argument(
+    "--smoke-test",
+    action="store_true",
+    help="Build a separate simulator app that checks host interactions",
+)
 args = parser.parse_args()
 if args.jobs < 1:
     parser.error("--jobs must be positive")
@@ -33,6 +38,10 @@ if args.profile:
     args.profile = args.profile.expanduser().resolve()
 os.chdir(ROOT)
 bundle_id = args.bundle_id
+if args.smoke_test:
+    if args.device:
+        parser.error("--smoke-test is simulator-only")
+    bundle_id += ".smoketest"
 entitlements = None
 # Signing inputs stay on the contributor's machine; only generated output uses them.
 if args.device:
@@ -75,6 +84,8 @@ compiler = subprocess.check_output(
 ).strip()
 compiler_version = subprocess.check_output([compiler, "--version"])
 output = ROOT / "build" / ("ios-device" if args.device else "ios-simulator")
+if args.smoke_test:
+    output = ROOT / "build/ios-smoke"
 objects = output / "objects"
 objects.mkdir(parents=True, exist_ok=True)
 app = output / "LemonadeTycoon.app"
@@ -86,6 +97,7 @@ sources = [
     Path("engine/audio.c"),
     Path("engine/lifecycle.c"),
     Path("ports/ios/main.m"),
+    Path("ports/ios/GameView.m"),
 ]
 flags = [
     "-target",
@@ -96,7 +108,11 @@ flags = [
     "-DLEMON_IOS",
     "-Wno-tautological-constant-out-of-range-compare",
 ]
+if args.smoke_test:
+    sources.append(Path("ports/ios/tests/smoke.m"))
+    flags.append("-DLEMON_UI_SMOKE_TEST")
 headers = b"".join(p.read_bytes() for p in sorted(Path("engine").rglob("*.h")))
+headers += b"".join(p.read_bytes() for p in sorted(Path("ports/ios").glob("*.h")))
 
 
 def compile(source):
@@ -174,13 +190,14 @@ info = dict(
     CFBundleDisplayName="Lemonade Tycoon",
     CFBundleExecutable="LemonadeTycoon",
     CFBundlePackageType="APPL",
-    CFBundleVersion="6",
+    CFBundleVersion="7",
     CFBundleShortVersionString="0.1",
     MinimumOSVersion="17.0",
     UIDeviceFamily=[1, 2],
     LSRequiresIPhoneOS=True,
     UILaunchScreen={},
     UISupportedInterfaceOrientations=[
+        "UIInterfaceOrientationPortrait",
         "UIInterfaceOrientationLandscapeLeft",
         "UIInterfaceOrientationLandscapeRight",
     ],

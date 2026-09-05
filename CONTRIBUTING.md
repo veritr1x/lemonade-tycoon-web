@@ -45,6 +45,8 @@ python3 tools/test.py --integration  # Original startup, configuration, URLs, re
 After browser changes, try the [manual checklist](docs/testing.md). For engine
 changes, build the browser module too; a native C test alone cannot verify WebAssembly.
 Tests write diagnostics under `build/tests/` and use disposable save directories.
+For iOS changes, run `python3 tools/test_ios.py` on macOS and follow the
+[simulator and device checks](ports/ios/README.md#implementation-and-checks).
 
 Optional formatting and translation tools:
 
@@ -53,7 +55,7 @@ python3 -m venv .venv
 source .venv/bin/activate
 pip install -r requirements-dev.txt
 black tools engine/tests/differential.py
-clang-format -i engine/*.c engine/*.h ports/web/*.c ports/ios/*.m engine/tests/*.c
+clang-format -i engine/*.c engine/*.h ports/web/*.c ports/ios/*.[mh] ports/ios/tests/*.[cm] engine/tests/*.c
 npx --yes prettier@3.9.6 --write ports/web/*.js ports/web/*.css ports/web/*.html '*.md' docs/*.md
 ```
 

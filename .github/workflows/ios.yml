@@ -14,6 +14,8 @@ jobs:
     runs-on: macos-15
     steps:
       - uses: actions/checkout@v7.0.1
+      - name: Test layout and touch coordinate mapping
+        run: python3 tools/test_ios.py
       - name: Build and verify the simulator app
         run: python3 tools/build.py --port ios --jobs 3
       # App bundles, signing material, and IPA archives are never uploaded.

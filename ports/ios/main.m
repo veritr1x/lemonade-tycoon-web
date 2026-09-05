@@ -2,12 +2,18 @@
 #import <AVFoundation/AVFoundation.h>
 #import "../../engine/audio.h"
 #import "../../engine/platform.h"
+#import "GameView.h"
 
 // UIKit and AVAudioEngine state is confined to the main thread.
 static AVAudioEngine *audioEngine;
-static BOOL audioRequested, audioInterrupted, appActive = YES;
+static BOOL audioRequested, audioInterrupted, appActive = YES, userPaused, userMuted;
+static NSLock *frameLock;
+static NSData *pendingFrame;
+static BOOL frameDeliveryQueued;
+
+static BOOL hostActive(void) { return appActive && !audioInterrupted && !userPaused; }
 static BOOL resumeAudio(void) {
-  if (!audioRequested || !appActive || audioInterrupted)
+  if (!audioRequested || !hostActive())
     return YES;
   if (audioEngine.isRunning)
     return YES;
@@ -48,6 +54,7 @@ static BOOL resumeAudio(void) {
     [audioEngine attachNode:source];
     [audioEngine connect:source to:audioEngine.mainMixerNode format:format];
   }
+  audioEngine.mainMixerNode.outputVolume = userMuted ? 0 : 1;
   BOOL ok = [audioEngine startAndReturnError:&error];
   fprintf(stderr, "Apple audio engine: %s\n", ok ? "running" : error.description.UTF8String);
   return ok;
@@ -76,127 +83,16 @@ void lemon_audio_stop(void) {
     dispatch_sync(dispatch_get_main_queue(), stop);
 }
 
-@interface LemonView : UIView <UIKeyInput>
-@property(nonatomic, strong) UIImageView *image;
-@property(nonatomic) CGRect textRect;
-@property(nonatomic) BOOL textActive;
-@property(nonatomic) CGFloat keyboardHeight;
-@property(nonatomic) CGRect gestureRect;
-@property(nonatomic) BOOL dismissingGesture;
-- (void)updateTextActive:(BOOL)active rect:(CGRect)rect;
-@end
-@implementation LemonView
-- (instancetype)initWithFrame:(CGRect)frame {
-  if ((self = [super initWithFrame:frame])) {
-    self.backgroundColor = UIColor.blackColor;
-    _image = [[UIImageView alloc] initWithFrame:self.bounds];
-    _image.contentMode = UIViewContentModeScaleAspectFit;
-    _image.layer.magnificationFilter = kCAFilterNearest;
-    [self addSubview:_image];
-    self.multipleTouchEnabled = NO;
-    [NSNotificationCenter.defaultCenter addObserver:self
-                                           selector:@selector(keyboardChanged:)
-                                               name:UIKeyboardWillChangeFrameNotification
-                                             object:nil];
-  }
-  return self;
-}
-- (void)dealloc {
-  [NSNotificationCenter.defaultCenter removeObserver:self];
-}
-- (CGRect)gameRect {
-  // Keep the original 640x480 surface visible above the software keyboard.
-  CGFloat width = self.bounds.size.width,
-          height = MAX(1, self.bounds.size.height - self.keyboardHeight);
-  CGFloat scale = MIN(width / 640, height / 480);
-  return CGRectMake((width - 640 * scale) / 2, (height - 480 * scale) / 2, 640 * scale,
-                    480 * scale);
-}
-- (void)layoutSubviews {
-  [super layoutSubviews];
-  self.image.frame = [self gameRect];
-}
-- (void)keyboardChanged:(NSNotification *)note {
-  CGRect screen = [note.userInfo[UIKeyboardFrameEndUserInfoKey] CGRectValue];
-  CGRect keyboard = [self convertRect:screen fromView:nil];
-  self.keyboardHeight = CGRectIntersectsRect(self.bounds, keyboard)
-                            ? self.bounds.size.height - MAX(0, keyboard.origin.y)
-                            : 0;
-  [self setNeedsLayout];
-}
-- (void)updateTextActive:(BOOL)active rect:(CGRect)rect {
-  self.textActive = active;
-  self.textRect = rect;
-  if (active)
-    [self becomeFirstResponder];
-  else
-    [self resignFirstResponder];
-}
-- (BOOL)canBecomeFirstResponder {
-  return self.textActive;
-}
-- (BOOL)hasText {
-  return YES;
-}
-- (void)insertText:(NSString *)text {
-  for (NSUInteger i = 0; i < text.length; i++) {
-    unichar c = [text characterAtIndex:i];
-    if (c <= 255)
-      lemon_key(c == '\n' ? 13 : c);
-  }
-}
-- (void)deleteBackward {
-  lemon_key(8);
-}
-- (UIKeyboardType)keyboardType {
-  return UIKeyboardTypeASCIICapable;
-}
-- (UITextAutocorrectionType)autocorrectionType {
-  return UITextAutocorrectionTypeNo;
-}
-- (CGPoint)gamePoint:(CGPoint)p rect:(CGRect)rect {
-  return CGPointMake((p.x - rect.origin.x) * 640 / rect.size.width,
-                     (p.y - rect.origin.y) * 480 / rect.size.height);
-}
-- (void)sendTouch:(NSSet<UITouch *> *)touches phase:(int)phase {
-  // Freeze the transform for this gesture. An outside tap only dismisses typing.
-  CGPoint local = [touches.anyObject locationInView:self];
-  if (phase == 0) {
-    self.gestureRect = [self gameRect];
-    self.dismissingGesture = NO;
-    CGPoint point = [self gamePoint:local rect:self.gestureRect];
-    if (self.isFirstResponder && !CGRectContainsPoint(CGRectInset(self.textRect, -8, -8), point)) {
-      self.dismissingGesture = YES;
-      [self resignFirstResponder];
-      return;
-    }
-    if (self.textActive && CGRectContainsPoint(CGRectInset(self.textRect, -8, -8), point))
-      [self becomeFirstResponder];
-  }
-  if (self.dismissingGesture)
-    return;
-  CGPoint point = [self gamePoint:local rect:self.gestureRect];
-  if (point.x >= 0 && point.x < 640 && point.y >= 0 && point.y < 480)
-    lemon_touch(point.x, point.y, phase);
-}
-- (void)touchesBegan:(NSSet<UITouch *> *)touches withEvent:(UIEvent *)event {
-  [self sendTouch:touches phase:0];
-}
-- (void)touchesMoved:(NSSet<UITouch *> *)touches withEvent:(UIEvent *)event {
-  [self sendTouch:touches phase:1];
-}
-- (void)touchesEnded:(NSSet<UITouch *> *)touches withEvent:(UIEvent *)event {
-  [self sendTouch:touches phase:2];
-}
-- (void)touchesCancelled:(NSSet<UITouch *> *)touches withEvent:(UIEvent *)event {
-  [self sendTouch:touches phase:2];
-}
-@end
 @interface LemonController : UIViewController
 @property(nonatomic, strong) LemonView *game;
 @property(nonatomic, strong) UILabel *status;
 @property(nonatomic, strong) UIButton *restart;
 @property(nonatomic) BOOL running;
+@property(nonatomic, strong) UIStackView *toolbar;
+@property(nonatomic, strong) UIView *toolbarSpacer;
+@property(nonatomic, strong) UIButton *pauseButton, *soundButton, *layoutButton;
+@property(nonatomic, strong) UILabel *titleLabel;
+- (void)refreshHostActivity;
 @end
 static __weak LemonController *controller;
 static int openGameURL(const char *address) {
@@ -227,20 +123,36 @@ static void presentKeyboard(int visible, int x, int y, int width, int height) {
   });
 }
 static void presentFrame(const uint32_t *rgb, unsigned width, unsigned height) {
-  // Copy pixels before returning to the engine, which reuses its framebuffer.
+  if (width != 640 || height != 480)
+    return;
   @autoreleasepool {
+    // At most one pending main-thread delivery. Replace stale pixels instead of
+    // letting slow layout, rotation, or accessibility build an unbounded queue.
     NSData *data = [NSData dataWithBytes:rgb length:width * height * 4];
-    CGDataProviderRef provider = CGDataProviderCreateWithCFData((__bridge CFDataRef)data);
-    CGColorSpaceRef colors = CGColorSpaceCreateDeviceRGB();
-    CGImageRef cg = CGImageCreate(width, height, 8, 32, width * 4, colors,
-                                  kCGBitmapByteOrder32Little | kCGImageAlphaNoneSkipFirst, provider,
-                                  NULL, NO, kCGRenderingIntentDefault);
-    UIImage *im = [UIImage imageWithCGImage:cg];
-    CGImageRelease(cg);
-    CGColorSpaceRelease(colors);
-    CGDataProviderRelease(provider);
+    [frameLock lock];
+    pendingFrame = data;
+    BOOL schedule = !frameDeliveryQueued;
+    frameDeliveryQueued = YES;
+    [frameLock unlock];
+    if (!schedule)
+      return;
     dispatch_async(dispatch_get_main_queue(), ^{
-      controller.game.image.image = im;
+      [frameLock lock];
+      NSData *latest = pendingFrame;
+      pendingFrame = nil;
+      frameDeliveryQueued = NO;
+      [frameLock unlock];
+      if (!controller.running || !latest)
+        return;
+      CGDataProviderRef provider = CGDataProviderCreateWithCFData((__bridge CFDataRef)latest);
+      CGColorSpaceRef colors = CGColorSpaceCreateDeviceRGB();
+      CGImageRef cg = CGImageCreate(640, 480, 8, 32, 640 * 4, colors,
+                                    kCGBitmapByteOrder32Little | kCGImageAlphaNoneSkipFirst,
+                                    provider, NULL, NO, kCGRenderingIntentDefault);
+      controller.game.frameImage = [UIImage imageWithCGImage:cg];
+      CGImageRelease(cg);
+      CGColorSpaceRelease(colors);
+      CGDataProviderRelease(provider);
       controller.status.hidden = YES;
     });
   }
@@ -295,21 +207,135 @@ static int presentDialog(const char *title, const char *body, int trial, char *n
   }
 }
 @implementation LemonController
+- (UIButton *)button:(NSString *)symbol label:(NSString *)label action:(SEL)action {
+  UIButton *button = [UIButton buttonWithType:UIButtonTypeSystem];
+  UIButtonConfiguration *style = [UIButtonConfiguration tintedButtonConfiguration];
+  style.image = [UIImage systemImageNamed:symbol];
+  // Explicit symbol size keeps the artwork inside its 48-point touch target,
+  // including at the largest accessibility text size.
+  style.preferredSymbolConfigurationForImage =
+      [UIImageSymbolConfiguration configurationWithPointSize:24 weight:UIImageSymbolWeightRegular];
+  style.baseForegroundColor = [UIColor colorWithRed:1 green:.87 blue:.28 alpha:1];
+  button.configuration = style;
+  button.accessibilityLabel = label;
+  button.toolTip = label;
+  [button.widthAnchor constraintEqualToConstant:48].active = YES;
+  [button.heightAnchor constraintGreaterThanOrEqualToConstant:48].active = YES;
+  [button addTarget:self action:action forControlEvents:UIControlEventTouchUpInside];
+  return button;
+}
+- (void)refreshHostActivity {
+  lemon_set_active(hostActive());
+  if (hostActive())
+    resumeAudio();
+  else
+    [audioEngine pause];
+  self.game.userInteractionEnabled = self.running && !userPaused;
+  self.pauseButton.accessibilityLabel = userPaused ? @"Resume game" : @"Pause game";
+  self.pauseButton.toolTip = self.pauseButton.accessibilityLabel;
+  UIButtonConfiguration *style = self.pauseButton.configuration;
+  style.image = [UIImage systemImageNamed:userPaused ? @"play.fill" : @"pause.fill"];
+  self.pauseButton.configuration = style;
+  self.titleLabel.text = userPaused ? @"Game paused" : @"Lemonade Tycoon";
+}
+- (void)togglePause {
+  [self.game cancelGameTouch];
+  [self.game resignFirstResponder];
+  userPaused = !userPaused;
+  [self refreshHostActivity];
+  UIAccessibilityPostNotification(UIAccessibilityAnnouncementNotification,
+                                  userPaused ? @"Game paused" : @"Game resumed");
+}
+- (void)toggleSound {
+  [self.game resignFirstResponder];
+  userMuted = !userMuted;
+  [NSUserDefaults.standardUserDefaults setBool:userMuted forKey:@"soundMuted"];
+  audioEngine.mainMixerNode.outputVolume = userMuted ? 0 : 1;
+  UIButtonConfiguration *style = self.soundButton.configuration;
+  style.image =
+      [UIImage systemImageNamed:userMuted ? @"speaker.slash.fill" : @"speaker.wave.2.fill"];
+  self.soundButton.configuration = style;
+  self.soundButton.accessibilityLabel = userMuted ? @"Unmute sound" : @"Mute sound";
+  self.soundButton.toolTip = self.soundButton.accessibilityLabel;
+}
+- (void)toggleLayout {
+  [self.game resignFirstResponder];
+  BOOL classic = ![NSUserDefaults.standardUserDefaults boolForKey:@"classicLayout"];
+  [NSUserDefaults.standardUserDefaults setBool:classic forKey:@"classicLayout"];
+  [self.view setNeedsLayout];
+  UIAccessibilityPostNotification(UIAccessibilityAnnouncementNotification,
+                                  classic ? @"Full game layout" : @"Portrait panels enabled");
+}
+- (void)viewDidLayoutSubviews {
+  [super viewDidLayoutSubviews];
+  BOOL portrait = self.view.bounds.size.height > self.view.bounds.size.width;
+  BOOL panels = portrait && ![NSUserDefaults.standardUserDefaults boolForKey:@"classicLayout"];
+  if (self.game.portraitPanels != panels)
+    self.game.portraitPanels = panels;
+  self.layoutButton.accessibilityLabel = panels ? @"Show full game only" : @"Use portrait panels";
+  self.layoutButton.toolTip = self.layoutButton.accessibilityLabel;
+}
 - (void)viewDidLoad {
   [super viewDidLoad];
   controller = self;
+  self.overrideUserInterfaceStyle = UIUserInterfaceStyleDark;
   self.view.backgroundColor = UIColor.blackColor;
   self.game = [[LemonView alloc] initWithFrame:self.view.bounds];
-  self.game.autoresizingMask = UIViewAutoresizingFlexibleWidth | UIViewAutoresizingFlexibleHeight;
+  self.game.translatesAutoresizingMaskIntoConstraints = NO;
   [self.view addSubview:self.game];
+  self.titleLabel = [UILabel new];
+  self.titleLabel.text = @"Lemonade Tycoon";
+  self.titleLabel.textColor = UIColor.whiteColor;
+  self.titleLabel.font = [UIFont preferredFontForTextStyle:UIFontTextStyleHeadline];
+  self.titleLabel.adjustsFontForContentSizeCategory = YES;
+  self.titleLabel.numberOfLines = 0;
+  self.titleLabel.accessibilityTraits = UIAccessibilityTraitHeader;
+  [self.titleLabel setContentCompressionResistancePriority:UILayoutPriorityDefaultLow
+                                                   forAxis:UILayoutConstraintAxisHorizontal];
+  self.soundButton = [self button:userMuted ? @"speaker.slash.fill" : @"speaker.wave.2.fill"
+                            label:userMuted ? @"Unmute sound" : @"Mute sound"
+                           action:@selector(toggleSound)];
+  self.pauseButton = [self button:@"pause.fill" label:@"Pause game" action:@selector(togglePause)];
+  self.layoutButton = [self button:@"rectangle.split.1x2"
+                             label:@"Change layout"
+                            action:@selector(toggleLayout)];
+  self.toolbarSpacer = [UIView new];
+  UIStackView *controls = [[UIStackView alloc] initWithArrangedSubviews:@[
+    self.soundButton, self.pauseButton, self.layoutButton, self.toolbarSpacer
+  ]];
+  controls.spacing = 8;
+  self.toolbar = [[UIStackView alloc] initWithArrangedSubviews:@[ self.titleLabel, controls ]];
+  self.toolbar.spacing = 8;
+  self.toolbar.translatesAutoresizingMaskIntoConstraints = NO;
+  [self.view addSubview:self.toolbar];
+  UILayoutGuide *safe = self.view.safeAreaLayoutGuide;
+  [NSLayoutConstraint activateConstraints:@[
+    [self.toolbar.topAnchor constraintEqualToAnchor:safe.topAnchor constant:8],
+    [self.toolbar.leadingAnchor constraintEqualToAnchor:safe.leadingAnchor constant:12],
+    [self.toolbar.trailingAnchor constraintEqualToAnchor:safe.trailingAnchor constant:-12],
+    [self.game.topAnchor constraintEqualToAnchor:self.toolbar.bottomAnchor constant:8],
+    [self.game.leadingAnchor constraintEqualToAnchor:safe.leadingAnchor],
+    [self.game.trailingAnchor constraintEqualToAnchor:safe.trailingAnchor],
+    [self.game.bottomAnchor constraintEqualToAnchor:self.view.keyboardLayoutGuide.topAnchor]
+  ]];
+  [self updateToolbarLayout];
+  [NSNotificationCenter.defaultCenter addObserver:self
+                                         selector:@selector(updateToolbarLayout)
+                                             name:UIContentSizeCategoryDidChangeNotification
+                                           object:nil];
   self.status = [UILabel new];
   self.status.translatesAutoresizingMaskIntoConstraints = NO;
   self.status.textColor = UIColor.whiteColor;
   self.status.textAlignment = NSTextAlignmentCenter;
+  self.status.numberOfLines = 0;
+  self.status.font = [UIFont preferredFontForTextStyle:UIFontTextStyleBody];
+  self.status.adjustsFontForContentSizeCategory = YES;
   [self.view addSubview:self.status];
   self.restart = [UIButton buttonWithType:UIButtonTypeSystem];
   self.restart.translatesAutoresizingMaskIntoConstraints = NO;
   [self.restart setTitle:@"Play again" forState:UIControlStateNormal];
+  self.restart.titleLabel.font = [UIFont preferredFontForTextStyle:UIFontTextStyleHeadline];
+  self.restart.titleLabel.adjustsFontForContentSizeCategory = YES;
   [self.restart addTarget:self
                    action:@selector(startGame)
          forControlEvents:UIControlEventTouchUpInside];
@@ -317,6 +343,7 @@ static int presentDialog(const char *title, const char *body, int trial, char *n
   [NSLayoutConstraint activateConstraints:@[
     [self.status.centerXAnchor constraintEqualToAnchor:self.view.centerXAnchor],
     [self.status.centerYAnchor constraintEqualToAnchor:self.view.centerYAnchor constant:-20],
+    [self.status.widthAnchor constraintLessThanOrEqualToAnchor:safe.widthAnchor constant:-48],
     [self.restart.centerXAnchor constraintEqualToAnchor:self.view.centerXAnchor],
     [self.restart.topAnchor constraintEqualToAnchor:self.status.bottomAnchor constant:20],
     [self.restart.heightAnchor constraintGreaterThanOrEqualToConstant:44],
@@ -324,15 +351,28 @@ static int presentDialog(const char *title, const char *body, int trial, char *n
   ]];
   [self startGame];
 }
+- (void)updateToolbarLayout {
+  // Give large text its own row instead of squeezing it between fixed buttons.
+  BOOL large = UIContentSizeCategoryIsAccessibilityCategory(
+      self.traitCollection.preferredContentSizeCategory);
+  self.toolbar.axis = large ? UILayoutConstraintAxisVertical : UILayoutConstraintAxisHorizontal;
+  self.toolbar.alignment = large ? UIStackViewAlignmentFill : UIStackViewAlignmentCenter;
+  self.toolbarSpacer.hidden = !large;
+}
+- (void)dealloc {
+  [NSNotificationCenter.defaultCenter removeObserver:self];
+}
 - (void)startGame {
   // One engine run owns its guest memory. Clean shutdown permits another run with saved data.
   if (self.running)
     return;
   self.running = YES;
+  userPaused = NO;
+  [self refreshHostActivity];
   self.restart.hidden = YES;
   self.game.hidden = NO;
   self.game.userInteractionEnabled = YES;
-  self.game.image.image = nil;
+  self.game.frameImage = nil;
   self.status.hidden = NO;
   self.status.text = @"Loading Lemonade Tycoon…";
   UIApplication.sharedApplication.idleTimerDisabled = YES;
@@ -361,7 +401,7 @@ static int presentDialog(const char *title, const char *body, int trial, char *n
   return YES;
 }
 - (UIInterfaceOrientationMask)supportedInterfaceOrientations {
-  return UIInterfaceOrientationMaskLandscape;
+  return UIInterfaceOrientationMaskAllButUpsideDown;
 }
 @end
 @interface LemonDelegate : UIResponder <UIApplicationDelegate>
@@ -377,33 +417,35 @@ static int presentDialog(const char *title, const char *body, int trial, char *n
                                          selector:@selector(audioConfigurationChanged:)
                                              name:AVAudioEngineConfigurationChangeNotification
                                            object:nil];
+  frameLock = [NSLock new];
+  userMuted = [NSUserDefaults.standardUserDefaults boolForKey:@"soundMuted"];
   self.window = [[UIWindow alloc] initWithFrame:UIScreen.mainScreen.bounds];
   self.window.rootViewController = [LemonController new];
   [self.window makeKeyAndVisible];
+#ifdef LEMON_UI_SMOKE_TEST
+  extern void lemon_ios_smoke_test(UIWindow * window);
+  lemon_ios_smoke_test(self.window);
+#endif
   return YES;
 }
 - (void)applicationWillResignActive:(UIApplication *)app {
   // Pause at the engine's cooperative boundary and exclude inactive time from its clock.
   appActive = NO;
-  lemon_set_active(0);
-  [audioEngine pause];
+  [controller.game cancelGameTouch];
+  [controller refreshHostActivity];
   [AVAudioSession.sharedInstance setActive:NO
                                withOptions:AVAudioSessionSetActiveOptionNotifyOthersOnDeactivation
                                      error:NULL];
 }
 - (void)applicationDidBecomeActive:(UIApplication *)app {
   appActive = YES;
-  lemon_set_active(1);
-  resumeAudio();
+  [controller refreshHostActivity];
 }
 - (void)audioInterrupted:(NSNotification *)note {
   NSNumber *type = note.userInfo[AVAudioSessionInterruptionTypeKey];
   dispatch_async(dispatch_get_main_queue(), ^{
     audioInterrupted = type.unsignedIntegerValue == AVAudioSessionInterruptionTypeBegan;
-    if (audioInterrupted)
-      [audioEngine pause];
-    else
-      resumeAudio();
+    [controller refreshHostActivity];
   });
 }
 - (void)audioConfigurationChanged:(NSNotification *)note {

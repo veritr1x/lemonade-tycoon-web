@@ -6,10 +6,13 @@ Follow `ports/web/app.js` → `ports/web/host.c` → `engine/platform.c` when de
 browser interaction. The page shell is intentionally framework-free. The original
 game still owns its menus, simulation, text, and bitmap drawing.
 
-For iOS, follow `ports/ios/main.m` → `engine/platform.c`. UIKit hosts the same engine
-on a worker thread and presents copied frames on the main thread. AVAudioEngine
+For iOS, follow `ports/ios/GameView.m` → `engine/platform.c` for input, and
+`ports/ios/main.m` for lifecycle, audio, and frame delivery. UIKit hosts the same engine
+on a worker thread and presents the latest copied frame on the main thread. AVAudioEngine
 uses the shared mixer, `UIKeyInput` supplies native text input, and the app's
-Documents directory holds saves. See the [iOS notes](../ports/ios/README.md).
+Documents directory holds saves. Portrait stacks the right column above the left;
+`ports/ios/layout.h` defines the rectangles shared by drawing and touch mapping.
+See the [iOS notes](../ports/ios/README.md).
 
 ## Original code and guest memory
 
