@@ -1,0 +1,599 @@
+/* Generated from resolved-imports.json; inferred mappings retain provenance there. */
+typedef enum {
+ API_RegCloseKey=0,
+ API_RegSetValueExA=1,
+ API_RegCreateKeyA=2,
+ API_RegOpenKeyExA=3,
+ API_RegQueryValueExA=4,
+ API_RegCreateKeyExA=5,
+ API_CreateSolidBrush=6,
+ API_DeleteDC=7,
+ API_BitBlt=8,
+ API_SelectObject=9,
+ API_CreateCompatibleDC=10,
+ API_DeleteObject=11,
+ API_Rectangle=12,
+ API_StretchBlt=13,
+ API_CreateDIBSection=14,
+ API_GetStringTypeW=15,
+ API_LCMapStringA=16,
+ API_GetStringTypeA=17,
+ API_GetOEMCP=18,
+ API_GetACP=19,
+ API_GetCPInfo=20,
+ API_IsBadCodePtr=21,
+ API_SetStdHandle=22,
+ API_HeapDestroy=23,
+ API_HeapCreate=24,
+ API_LCMapStringW=25,
+ API_SetHandleCount=26,
+ API_GetEnvironmentStringsW=27,
+ API_GetEnvironmentStrings=28,
+ API_WideCharToMultiByte=29,
+ API_FreeEnvironmentStringsW=30,
+ API_FreeEnvironmentStringsA=31,
+ API_UnhandledExceptionFilter=32,
+ API_HeapSize=33,
+ API_HeapReAlloc=34,
+ API_HeapAlloc=35,
+ API_HeapFree=36,
+ API_VirtualAlloc=37,
+ API_MultiByteToWideChar=38,
+ API_GetVersion=39,
+ API_GetStartupInfoA=40,
+ API_TerminateProcess=41,
+ API_ExitProcess=42,
+ API_RtlUnwind=43,
+ API_IsBadWritePtr=44,
+ API_SetUnhandledExceptionFilter=45,
+ API_IsBadReadPtr=46,
+ API_GetFileType=47,
+ API_GetStdHandle=48,
+ API_VirtualFree=49,
+ API_SystemTimeToFileTime=50,
+ API_CloseHandle=51,
+ API_GetCurrentProcess=52,
+ API_GetVersionExA=53,
+ API_FindResourceA=54,
+ API_LoadResource=55,
+ API_Sleep=56,
+ API_GetProcAddress=57,
+ API_LoadLibraryA=58,
+ API_GetEnvironmentVariableA=59,
+ API_GetModuleHandleA=60,
+ API_CreateProcessA=61,
+ API_GetModuleFileNameA=62,
+ API_ReleaseMutex=63,
+ API_FindClose=64,
+ API_lstrcpyA=65,
+ API_FindFirstFileA=66,
+ API_lstrcatA=67,
+ API_lstrlenA=68,
+ API_lstrcmpiA=69,
+ API_GlobalUnlock=70,
+ API_GlobalLock=71,
+ API_GlobalAlloc=72,
+ API_GetCommandLineA=73,
+ API_GetSystemInfo=74,
+ API_GetProfileIntA=75,
+ API_WriteProfileStringA=76,
+ API_GetTickCount=77,
+ API_SetFilePointer=78,
+ API_LockResource=79,
+ API_ReadFile=80,
+ API_GetFileSize=81,
+ API_CreateFileA=82,
+ API_CreateEventA=83,
+ API_GetSystemTime=84,
+ API_GetLastError=85,
+ API_FlushFileBuffers=86,
+ API_CreateThread=87,
+ API_WaitForSingleObject=88,
+ API_ConnectNamedPipe=89,
+ API_GlobalMemoryStatus=90,
+ API_CreateNamedPipeA=91,
+ API_WriteFile=92,
+ API_GetModuleFileNameW=93,
+ API_CreateMutexA=94,
+ API_GetLocalTime=95,
+ API_GetUserDefaultLangID=96,
+ API_mysql_init=97,
+ API_mysql_close=98,
+ API_mysql_field_count=99,
+ API_mysql_store_result=100,
+ API_mysql_query=101,
+ API_mysql_free_result=102,
+ API_mysql_real_connect=103,
+ API_mysql_errno=104,
+ API_mysql_error=105,
+ API_mysql_fetch_row=106,
+ API_mysql_num_rows=107,
+ API_mysql_num_fields=108,
+ API_mysql_field_seek=109,
+ API_mysql_fetch_field=110,
+ API_CeRapiInitEx=111,
+ API_CeCloseHandle=112,
+ API_CeGetFileSize=113,
+ API_CeReadFile=114,
+ API_CeRegCloseKey=115,
+ API_CeRegQueryValueEx=116,
+ API_CeCreateFile=117,
+ API_CeWriteFile=118,
+ API_CeRegOpenKeyEx=119,
+ API_CeRapiUninit=120,
+ API_ShellExecuteA=121,
+ API_GetKeyboardType=122,
+ API_GetClientRect=123,
+ API_CreateWindowExA=124,
+ API_AdjustWindowRectEx=125,
+ API_ReleaseDC=126,
+ API_MessageBeep=127,
+ API_LoadBitmapA=128,
+ API_DialogBoxParamA=129,
+ API_UpdateWindow=130,
+ API_ShowWindow=131,
+ API_ChangeDisplaySettingsA=132,
+ API_GetSystemMetrics=133,
+ API_OpenClipboard=134,
+ API_CloseWindow=135,
+ API_GetDC=136,
+ API_CloseClipboard=137,
+ API_LoadIconA=138,
+ API_RegisterWindowMessageA=139,
+ API_NtdllDefWindowProc_A=140,
+ API_EndPaint=141,
+ API_BeginPaint=142,
+ API_PostQuitMessage=143,
+ API_SetForegroundWindow=144,
+ API_DispatchMessageA=145,
+ API_TranslateMessage=146,
+ API_PeekMessageA=147,
+ API_SendMessageA=148,
+ API_EndDialog=149,
+ API_SetDlgItemTextA=150,
+ API_SystemParametersInfoA=151,
+ API_EmptyClipboard=152,
+ API_GetWindowTextA=153,
+ API_SetClipboardData=154,
+ API_LoadStringA=155,
+ API_GetDlgItemTextA=156,
+ API_GetWindowLongA=157,
+ API_IsWindowEnabled=158,
+ API_MessageBoxA=159,
+ API_GetDlgItem=160,
+ API_RegisterClassA=161,
+ API_EnableWindow=162,
+ API_LoadCursorA=163,
+ API_DestroyWindow=164,
+ API_PostMessageA=165,
+ API_SetWindowPos=166,
+ API_GetWindowRect=167,
+ API_SetWindowTextA=168,
+ API_WSACleanup=169,
+ API_WSAStartup=170,
+ API_recv=171,
+ API_send=172,
+ API_shutdown=173,
+ API_connect=174,
+ API_closesocket=175,
+ API_gethostbyname=176,
+ API_htons=177,
+ API_htonl=178,
+ API_socket=179,
+ API__FMUSIC_PlaySong_4=180,
+ API__FMUSIC_StopSong_4=181,
+ API__FMUSIC_SetPaused_8=182,
+ API__FSOUND_Close_0=183,
+ API__FSOUND_SetMute_8=184,
+ API__FSOUND_SetPaused_8=185,
+ API__FSOUND_SetLoopMode_8=186,
+ API__FSOUND_SetVolume_8=187,
+ API__FSOUND_SetFrequency_8=188,
+ API__FSOUND_SetPriority_8=189,
+ API__FSOUND_IsPlaying_4=190,
+ API__FSOUND_StopSound_4=191,
+ API__FSOUND_PlaySoundEx_16=192,
+ API__FSOUND_Sample_Free_4=193,
+ API__FSOUND_Sample_Load_16=194,
+ API__FSOUND_SetMemorySystem_20=195,
+ API__FSOUND_Init_12=196,
+ API_COUNT
+} API;
+static const char*api_names[]={
+"RegCloseKey",
+"RegSetValueExA",
+"RegCreateKeyA",
+"RegOpenKeyExA",
+"RegQueryValueExA",
+"RegCreateKeyExA",
+"CreateSolidBrush",
+"DeleteDC",
+"BitBlt",
+"SelectObject",
+"CreateCompatibleDC",
+"DeleteObject",
+"Rectangle",
+"StretchBlt",
+"CreateDIBSection",
+"GetStringTypeW",
+"LCMapStringA",
+"GetStringTypeA",
+"GetOEMCP",
+"GetACP",
+"GetCPInfo",
+"IsBadCodePtr",
+"SetStdHandle",
+"HeapDestroy",
+"HeapCreate",
+"LCMapStringW",
+"SetHandleCount",
+"GetEnvironmentStringsW",
+"GetEnvironmentStrings",
+"WideCharToMultiByte",
+"FreeEnvironmentStringsW",
+"FreeEnvironmentStringsA",
+"UnhandledExceptionFilter",
+"HeapSize",
+"HeapReAlloc",
+"HeapAlloc",
+"HeapFree",
+"VirtualAlloc",
+"MultiByteToWideChar",
+"GetVersion",
+"GetStartupInfoA",
+"TerminateProcess",
+"ExitProcess",
+"RtlUnwind",
+"IsBadWritePtr",
+"SetUnhandledExceptionFilter",
+"IsBadReadPtr",
+"GetFileType",
+"GetStdHandle",
+"VirtualFree",
+"SystemTimeToFileTime",
+"CloseHandle",
+"GetCurrentProcess",
+"GetVersionExA",
+"FindResourceA",
+"LoadResource",
+"Sleep",
+"GetProcAddress",
+"LoadLibraryA",
+"GetEnvironmentVariableA",
+"GetModuleHandleA",
+"CreateProcessA",
+"GetModuleFileNameA",
+"ReleaseMutex",
+"FindClose",
+"lstrcpyA",
+"FindFirstFileA",
+"lstrcatA",
+"lstrlenA",
+"lstrcmpiA",
+"GlobalUnlock",
+"GlobalLock",
+"GlobalAlloc",
+"GetCommandLineA",
+"GetSystemInfo",
+"GetProfileIntA",
+"WriteProfileStringA",
+"GetTickCount",
+"SetFilePointer",
+"LockResource",
+"ReadFile",
+"GetFileSize",
+"CreateFileA",
+"CreateEventA",
+"GetSystemTime",
+"GetLastError",
+"FlushFileBuffers",
+"CreateThread",
+"WaitForSingleObject",
+"ConnectNamedPipe",
+"GlobalMemoryStatus",
+"CreateNamedPipeA",
+"WriteFile",
+"GetModuleFileNameW",
+"CreateMutexA",
+"GetLocalTime",
+"GetUserDefaultLangID",
+"mysql_init",
+"mysql_close",
+"mysql_field_count",
+"mysql_store_result",
+"mysql_query",
+"mysql_free_result",
+"mysql_real_connect",
+"mysql_errno",
+"mysql_error",
+"mysql_fetch_row",
+"mysql_num_rows",
+"mysql_num_fields",
+"mysql_field_seek",
+"mysql_fetch_field",
+"CeRapiInitEx",
+"CeCloseHandle",
+"CeGetFileSize",
+"CeReadFile",
+"CeRegCloseKey",
+"CeRegQueryValueEx",
+"CeCreateFile",
+"CeWriteFile",
+"CeRegOpenKeyEx",
+"CeRapiUninit",
+"ShellExecuteA",
+"GetKeyboardType",
+"GetClientRect",
+"CreateWindowExA",
+"AdjustWindowRectEx",
+"ReleaseDC",
+"MessageBeep",
+"LoadBitmapA",
+"DialogBoxParamA",
+"UpdateWindow",
+"ShowWindow",
+"ChangeDisplaySettingsA",
+"GetSystemMetrics",
+"OpenClipboard",
+"CloseWindow",
+"GetDC",
+"CloseClipboard",
+"LoadIconA",
+"RegisterWindowMessageA",
+"NtdllDefWindowProc_A",
+"EndPaint",
+"BeginPaint",
+"PostQuitMessage",
+"SetForegroundWindow",
+"DispatchMessageA",
+"TranslateMessage",
+"PeekMessageA",
+"SendMessageA",
+"EndDialog",
+"SetDlgItemTextA",
+"SystemParametersInfoA",
+"EmptyClipboard",
+"GetWindowTextA",
+"SetClipboardData",
+"LoadStringA",
+"GetDlgItemTextA",
+"GetWindowLongA",
+"IsWindowEnabled",
+"MessageBoxA",
+"GetDlgItem",
+"RegisterClassA",
+"EnableWindow",
+"LoadCursorA",
+"DestroyWindow",
+"PostMessageA",
+"SetWindowPos",
+"GetWindowRect",
+"SetWindowTextA",
+"WSACleanup",
+"WSAStartup",
+"recv",
+"send",
+"shutdown",
+"connect",
+"closesocket",
+"gethostbyname",
+"htons",
+"htonl",
+"socket",
+"_FMUSIC_PlaySong@4",
+"_FMUSIC_StopSong@4",
+"_FMUSIC_SetPaused@8",
+"_FSOUND_Close@0",
+"_FSOUND_SetMute@8",
+"_FSOUND_SetPaused@8",
+"_FSOUND_SetLoopMode@8",
+"_FSOUND_SetVolume@8",
+"_FSOUND_SetFrequency@8",
+"_FSOUND_SetPriority@8",
+"_FSOUND_IsPlaying@4",
+"_FSOUND_StopSound@4",
+"_FSOUND_PlaySoundEx@16",
+"_FSOUND_Sample_Free@4",
+"_FSOUND_Sample_Load@16",
+"_FSOUND_SetMemorySystem@20",
+"_FSOUND_Init@12",
+};
+static void patch_imports(CPU*c){
+wr(c,0x462000,0xf0000000u+0*16,32);
+wr(c,0x462004,0xf0000000u+1*16,32);
+wr(c,0x462008,0xf0000000u+2*16,32);
+wr(c,0x46200c,0xf0000000u+3*16,32);
+wr(c,0x462010,0xf0000000u+4*16,32);
+wr(c,0x462014,0xf0000000u+5*16,32);
+wr(c,0x46201c,0xf0000000u+6*16,32);
+wr(c,0x462020,0xf0000000u+7*16,32);
+wr(c,0x462024,0xf0000000u+8*16,32);
+wr(c,0x462028,0xf0000000u+9*16,32);
+wr(c,0x46202c,0xf0000000u+10*16,32);
+wr(c,0x462030,0xf0000000u+11*16,32);
+wr(c,0x462034,0xf0000000u+12*16,32);
+wr(c,0x462038,0xf0000000u+13*16,32);
+wr(c,0x46203c,0xf0000000u+14*16,32);
+wr(c,0x462044,0xf0000000u+15*16,32);
+wr(c,0x462048,0xf0000000u+16*16,32);
+wr(c,0x46204c,0xf0000000u+17*16,32);
+wr(c,0x462050,0xf0000000u+18*16,32);
+wr(c,0x462054,0xf0000000u+19*16,32);
+wr(c,0x462058,0xf0000000u+20*16,32);
+wr(c,0x46205c,0xf0000000u+21*16,32);
+wr(c,0x462060,0xf0000000u+22*16,32);
+wr(c,0x462064,0xf0000000u+23*16,32);
+wr(c,0x462068,0xf0000000u+24*16,32);
+wr(c,0x46206c,0xf0000000u+25*16,32);
+wr(c,0x462070,0xf0000000u+26*16,32);
+wr(c,0x462074,0xf0000000u+27*16,32);
+wr(c,0x462078,0xf0000000u+28*16,32);
+wr(c,0x46207c,0xf0000000u+29*16,32);
+wr(c,0x462080,0xf0000000u+30*16,32);
+wr(c,0x462084,0xf0000000u+31*16,32);
+wr(c,0x462088,0xf0000000u+32*16,32);
+wr(c,0x46208c,0xf0000000u+33*16,32);
+wr(c,0x462090,0xf0000000u+34*16,32);
+wr(c,0x462094,0xf0000000u+35*16,32);
+wr(c,0x462098,0xf0000000u+36*16,32);
+wr(c,0x46209c,0xf0000000u+37*16,32);
+wr(c,0x4620a0,0xf0000000u+38*16,32);
+wr(c,0x4620a4,0xf0000000u+39*16,32);
+wr(c,0x4620a8,0xf0000000u+40*16,32);
+wr(c,0x4620ac,0xf0000000u+41*16,32);
+wr(c,0x4620b0,0xf0000000u+42*16,32);
+wr(c,0x4620b4,0xf0000000u+43*16,32);
+wr(c,0x4620b8,0xf0000000u+44*16,32);
+wr(c,0x4620bc,0xf0000000u+45*16,32);
+wr(c,0x4620c0,0xf0000000u+46*16,32);
+wr(c,0x4620c4,0xf0000000u+47*16,32);
+wr(c,0x4620c8,0xf0000000u+48*16,32);
+wr(c,0x4620cc,0xf0000000u+49*16,32);
+wr(c,0x4620d0,0xf0000000u+50*16,32);
+wr(c,0x4620d4,0xf0000000u+51*16,32);
+wr(c,0x4620d8,0xf0000000u+52*16,32);
+wr(c,0x4620dc,0xf0000000u+53*16,32);
+wr(c,0x4620e0,0xf0000000u+54*16,32);
+wr(c,0x4620e4,0xf0000000u+55*16,32);
+wr(c,0x4620e8,0xf0000000u+56*16,32);
+wr(c,0x4620ec,0xf0000000u+57*16,32);
+wr(c,0x4620f0,0xf0000000u+58*16,32);
+wr(c,0x4620f4,0xf0000000u+59*16,32);
+wr(c,0x4620f8,0xf0000000u+60*16,32);
+wr(c,0x4620fc,0xf0000000u+61*16,32);
+wr(c,0x462100,0xf0000000u+62*16,32);
+wr(c,0x462104,0xf0000000u+63*16,32);
+wr(c,0x462108,0xf0000000u+64*16,32);
+wr(c,0x46210c,0xf0000000u+65*16,32);
+wr(c,0x462110,0xf0000000u+66*16,32);
+wr(c,0x462114,0xf0000000u+67*16,32);
+wr(c,0x462118,0xf0000000u+68*16,32);
+wr(c,0x46211c,0xf0000000u+69*16,32);
+wr(c,0x462120,0xf0000000u+70*16,32);
+wr(c,0x462124,0xf0000000u+71*16,32);
+wr(c,0x462128,0xf0000000u+72*16,32);
+wr(c,0x46212c,0xf0000000u+73*16,32);
+wr(c,0x462130,0xf0000000u+74*16,32);
+wr(c,0x462134,0xf0000000u+75*16,32);
+wr(c,0x462138,0xf0000000u+76*16,32);
+wr(c,0x46213c,0xf0000000u+77*16,32);
+wr(c,0x462140,0xf0000000u+78*16,32);
+wr(c,0x462144,0xf0000000u+79*16,32);
+wr(c,0x462148,0xf0000000u+80*16,32);
+wr(c,0x46214c,0xf0000000u+81*16,32);
+wr(c,0x462150,0xf0000000u+82*16,32);
+wr(c,0x462154,0xf0000000u+83*16,32);
+wr(c,0x462158,0xf0000000u+84*16,32);
+wr(c,0x46215c,0xf0000000u+85*16,32);
+wr(c,0x462160,0xf0000000u+86*16,32);
+wr(c,0x462164,0xf0000000u+87*16,32);
+wr(c,0x462168,0xf0000000u+88*16,32);
+wr(c,0x46216c,0xf0000000u+89*16,32);
+wr(c,0x462170,0xf0000000u+90*16,32);
+wr(c,0x462174,0xf0000000u+91*16,32);
+wr(c,0x462178,0xf0000000u+92*16,32);
+wr(c,0x46217c,0xf0000000u+93*16,32);
+wr(c,0x462180,0xf0000000u+94*16,32);
+wr(c,0x462184,0xf0000000u+95*16,32);
+wr(c,0x462188,0xf0000000u+96*16,32);
+wr(c,0x462190,0xf0000000u+97*16,32);
+wr(c,0x462194,0xf0000000u+98*16,32);
+wr(c,0x462198,0xf0000000u+99*16,32);
+wr(c,0x46219c,0xf0000000u+100*16,32);
+wr(c,0x4621a0,0xf0000000u+101*16,32);
+wr(c,0x4621a4,0xf0000000u+102*16,32);
+wr(c,0x4621a8,0xf0000000u+103*16,32);
+wr(c,0x4621ac,0xf0000000u+104*16,32);
+wr(c,0x4621b0,0xf0000000u+105*16,32);
+wr(c,0x4621b4,0xf0000000u+106*16,32);
+wr(c,0x4621b8,0xf0000000u+107*16,32);
+wr(c,0x4621bc,0xf0000000u+108*16,32);
+wr(c,0x4621c0,0xf0000000u+109*16,32);
+wr(c,0x4621c4,0xf0000000u+110*16,32);
+wr(c,0x4621cc,0xf0000000u+111*16,32);
+wr(c,0x4621d0,0xf0000000u+112*16,32);
+wr(c,0x4621d4,0xf0000000u+113*16,32);
+wr(c,0x4621d8,0xf0000000u+114*16,32);
+wr(c,0x4621dc,0xf0000000u+115*16,32);
+wr(c,0x4621e0,0xf0000000u+116*16,32);
+wr(c,0x4621e4,0xf0000000u+117*16,32);
+wr(c,0x4621e8,0xf0000000u+118*16,32);
+wr(c,0x4621ec,0xf0000000u+119*16,32);
+wr(c,0x4621f0,0xf0000000u+120*16,32);
+wr(c,0x4621f8,0xf0000000u+121*16,32);
+wr(c,0x462200,0xf0000000u+122*16,32);
+wr(c,0x462204,0xf0000000u+123*16,32);
+wr(c,0x462208,0xf0000000u+124*16,32);
+wr(c,0x46220c,0xf0000000u+125*16,32);
+wr(c,0x462210,0xf0000000u+126*16,32);
+wr(c,0x462214,0xf0000000u+127*16,32);
+wr(c,0x462218,0xf0000000u+128*16,32);
+wr(c,0x46221c,0xf0000000u+129*16,32);
+wr(c,0x462220,0xf0000000u+130*16,32);
+wr(c,0x462224,0xf0000000u+131*16,32);
+wr(c,0x462228,0xf0000000u+132*16,32);
+wr(c,0x46222c,0xf0000000u+133*16,32);
+wr(c,0x462230,0xf0000000u+134*16,32);
+wr(c,0x462234,0xf0000000u+135*16,32);
+wr(c,0x462238,0xf0000000u+136*16,32);
+wr(c,0x46223c,0xf0000000u+137*16,32);
+wr(c,0x462240,0xf0000000u+138*16,32);
+wr(c,0x462244,0xf0000000u+139*16,32);
+wr(c,0x462248,0xf0000000u+140*16,32);
+wr(c,0x46224c,0xf0000000u+141*16,32);
+wr(c,0x462250,0xf0000000u+142*16,32);
+wr(c,0x462254,0xf0000000u+143*16,32);
+wr(c,0x462258,0xf0000000u+144*16,32);
+wr(c,0x46225c,0xf0000000u+145*16,32);
+wr(c,0x462260,0xf0000000u+146*16,32);
+wr(c,0x462264,0xf0000000u+147*16,32);
+wr(c,0x462268,0xf0000000u+148*16,32);
+wr(c,0x46226c,0xf0000000u+149*16,32);
+wr(c,0x462270,0xf0000000u+150*16,32);
+wr(c,0x462274,0xf0000000u+151*16,32);
+wr(c,0x462278,0xf0000000u+152*16,32);
+wr(c,0x46227c,0xf0000000u+153*16,32);
+wr(c,0x462280,0xf0000000u+154*16,32);
+wr(c,0x462284,0xf0000000u+155*16,32);
+wr(c,0x462288,0xf0000000u+156*16,32);
+wr(c,0x46228c,0xf0000000u+157*16,32);
+wr(c,0x462290,0xf0000000u+158*16,32);
+wr(c,0x462294,0xf0000000u+159*16,32);
+wr(c,0x462298,0xf0000000u+160*16,32);
+wr(c,0x46229c,0xf0000000u+161*16,32);
+wr(c,0x4622a0,0xf0000000u+162*16,32);
+wr(c,0x4622a4,0xf0000000u+163*16,32);
+wr(c,0x4622a8,0xf0000000u+164*16,32);
+wr(c,0x4622ac,0xf0000000u+165*16,32);
+wr(c,0x4622b0,0xf0000000u+166*16,32);
+wr(c,0x4622b4,0xf0000000u+167*16,32);
+wr(c,0x4622b8,0xf0000000u+168*16,32);
+wr(c,0x4622c0,0xf0000000u+169*16,32);
+wr(c,0x4622c4,0xf0000000u+170*16,32);
+wr(c,0x4622c8,0xf0000000u+171*16,32);
+wr(c,0x4622cc,0xf0000000u+172*16,32);
+wr(c,0x4622d0,0xf0000000u+173*16,32);
+wr(c,0x4622d4,0xf0000000u+174*16,32);
+wr(c,0x4622d8,0xf0000000u+175*16,32);
+wr(c,0x4622dc,0xf0000000u+176*16,32);
+wr(c,0x4622e0,0xf0000000u+177*16,32);
+wr(c,0x4622e4,0xf0000000u+178*16,32);
+wr(c,0x4622e8,0xf0000000u+179*16,32);
+wr(c,0x4622f0,0xf0000000u+180*16,32);
+wr(c,0x4622f4,0xf0000000u+181*16,32);
+wr(c,0x4622f8,0xf0000000u+182*16,32);
+wr(c,0x4622fc,0xf0000000u+183*16,32);
+wr(c,0x462300,0xf0000000u+184*16,32);
+wr(c,0x462304,0xf0000000u+185*16,32);
+wr(c,0x462308,0xf0000000u+186*16,32);
+wr(c,0x46230c,0xf0000000u+187*16,32);
+wr(c,0x462310,0xf0000000u+188*16,32);
+wr(c,0x462314,0xf0000000u+189*16,32);
+wr(c,0x462318,0xf0000000u+190*16,32);
+wr(c,0x46231c,0xf0000000u+191*16,32);
+wr(c,0x462320,0xf0000000u+192*16,32);
+wr(c,0x462324,0xf0000000u+193*16,32);
+wr(c,0x462328,0xf0000000u+194*16,32);
+wr(c,0x46232c,0xf0000000u+195*16,32);
+wr(c,0x462330,0xf0000000u+196*16,32);
+}

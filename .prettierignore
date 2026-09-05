@@ -1,0 +1,4 @@
+assets/
+native/generated/
+build/
+node_modules/

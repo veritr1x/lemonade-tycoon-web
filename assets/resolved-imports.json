@@ -1,0 +1,2983 @@
+[
+  {
+    "iat": 4595712,
+    "target": 2145017996,
+    "exports": [
+      [
+        "advapi32.dll",
+        "RegCloseKey"
+      ]
+    ],
+    "refs": [
+      4347739,
+      4348622,
+      4348692,
+      4348714,
+      4348801,
+      4348823,
+      4349810,
+      4349935,
+      4418836,
+      4419293,
+      4419452,
+      4426651,
+      4427201,
+      4427362,
+      4427472,
+      4467137,
+      4467701
+    ],
+    "method": "export or export trampoline"
+  },
+  {
+    "iat": 4595716,
+    "target": 2145018836,
+    "exports": [
+      [
+        "advapi32.dll",
+        "RegSetValueExA"
+      ]
+    ],
+    "refs": [
+      4347695,
+      4347730,
+      4419282,
+      4419441,
+      4426640,
+      4427345,
+      4427450
+    ],
+    "method": "export or export trampoline"
+  },
+  {
+    "iat": 4595720,
+    "target": 2145093216,
+    "exports": [
+      [
+        "advapi32.dll",
+        "RegCreateKeyA"
+      ]
+    ],
+    "refs": [
+      4347599,
+      4347646,
+      4418581,
+      4419247,
+      4419406
+    ],
+    "method": "export or export trampoline"
+  },
+  {
+    "iat": 4595724,
+    "target": 2145018556,
+    "exports": [
+      [
+        "advapi32.dll",
+        "RegOpenKeyExA"
+      ]
+    ],
+    "refs": [
+      4348750,
+      4427423,
+      4466723
+    ],
+    "method": "export or export trampoline"
+  },
+  {
+    "iat": 4595728,
+    "target": 2145018656,
+    "exports": [
+      [
+        "advapi32.dll",
+        "RegQueryValueExA"
+      ]
+    ],
+    "refs": [
+      4348788,
+      4427165
+    ],
+    "method": "export or export trampoline"
+  },
+  {
+    "iat": 4595732,
+    "target": 2145018036,
+    "exports": [
+      [
+        "advapi32.dll",
+        "RegCreateKeyExA"
+      ]
+    ],
+    "refs": [
+      4426588,
+      4427111,
+      4467429
+    ],
+    "method": "export or export trampoline"
+  },
+  {
+    "iat": 4595740,
+    "target": 2142775216,
+    "exports": [
+      [
+        "gdi32.dll",
+        "CreateSolidBrush"
+      ]
+    ],
+    "refs": [
+      4392720,
+      4393347
+    ],
+    "method": "export or export trampoline"
+  },
+  {
+    "iat": 4595744,
+    "target": 2142775872,
+    "exports": [
+      [
+        "gdi32.dll",
+        "DeleteDC"
+      ]
+    ],
+    "refs": [
+      4392685,
+      4442191
+    ],
+    "method": "export or export trampoline"
+  },
+  {
+    "iat": 4595748,
+    "target": 2142746160,
+    "exports": [
+      [
+        "gdi32.dll",
+        "BitBlt"
+      ]
+    ],
+    "refs": [
+      4392678
+    ],
+    "method": "export or export trampoline"
+  },
+  {
+    "iat": 4595752,
+    "target": 2142942768,
+    "exports": [
+      [
+        "gdi32.dll",
+        "SelectObject"
+      ]
+    ],
+    "refs": [
+      4392643,
+      4442139,
+      4442171
+    ],
+    "method": "export or export trampoline"
+  },
+  {
+    "iat": 4595756,
+    "target": 2142722092,
+    "exports": [
+      [
+        "gdi32.dll",
+        "CreateCompatibleDC"
+      ]
+    ],
+    "refs": [
+      4392633,
+      4442125
+    ],
+    "method": "export or export trampoline"
+  },
+  {
+    "iat": 4595760,
+    "target": 2142776720,
+    "exports": [
+      [
+        "gdi32.dll",
+        "DeleteObject"
+      ]
+    ],
+    "refs": [
+      4392700,
+      4392848,
+      4393401,
+      4442181
+    ],
+    "method": "export or export trampoline"
+  },
+  {
+    "iat": 4595764,
+    "target": 2142909024,
+    "exports": [
+      [
+        "gdi32.dll",
+        "Rectangle"
+      ]
+    ],
+    "refs": [
+      4393386
+    ],
+    "method": "export or export trampoline"
+  },
+  {
+    "iat": 4595768,
+    "target": 2142963184,
+    "exports": [
+      [
+        "gdi32.dll",
+        "StretchBlt"
+      ]
+    ],
+    "refs": [
+      4455023
+    ],
+    "method": "export or export trampoline"
+  },
+  {
+    "iat": 4595772,
+    "target": 2142767328,
+    "exports": [
+      [
+        "gdi32.dll",
+        "CreateDIBSection"
+      ]
+    ],
+    "refs": [
+      4393111
+    ],
+    "method": "export or export trampoline"
+  },
+  {
+    "iat": 4595780,
+    "target": 18106244,
+    "exports": [
+      [
+        "kernel32.dll",
+        "GetStringTypeW"
+      ]
+    ],
+    "refs": [
+      4547061,
+      4547299
+    ],
+    "method": "export or export trampoline"
+  },
+  {
+    "iat": 4595784,
+    "target": 18106256,
+    "exports": [
+      [
+        "kernel32.dll",
+        "LCMapStringA"
+      ]
+    ],
+    "refs": [
+      4537431,
+      4537504
+    ],
+    "method": "export or export trampoline"
+  },
+  {
+    "iat": 4595788,
+    "target": 18106268,
+    "exports": [
+      [
+        "kernel32.dll",
+        "GetStringTypeA"
+      ]
+    ],
+    "refs": [
+      4547087,
+      4547139
+    ],
+    "method": "export or export trampoline"
+  },
+  {
+    "iat": 4595792,
+    "target": 18106280,
+    "exports": [
+      [
+        "kernel32.dll",
+        "GetOEMCP"
+      ]
+    ],
+    "refs": [
+      4536039
+    ],
+    "method": "export or export trampoline"
+  },
+  {
+    "iat": 4595796,
+    "target": 18106292,
+    "exports": [
+      [
+        "kernel32.dll",
+        "GetACP"
+      ]
+    ],
+    "refs": [
+      4536060
+    ],
+    "method": "export or export trampoline"
+  },
+  {
+    "iat": 4595800,
+    "target": 18106304,
+    "exports": [
+      [
+        "kernel32.dll",
+        "GetCPInfo"
+      ]
+    ],
+    "refs": [
+      4535676,
+      4536199
+    ],
+    "method": "export or export trampoline"
+  },
+  {
+    "iat": 4595804,
+    "target": 18106316,
+    "exports": [
+      [
+        "kernel32.dll",
+        "IsBadCodePtr"
+      ]
+    ],
+    "refs": [
+      4544862
+    ],
+    "method": "export or export trampoline"
+  },
+  {
+    "iat": 4595808,
+    "target": 18106328,
+    "exports": [
+      [
+        "kernel32.dll",
+        "SetStdHandle"
+      ]
+    ],
+    "refs": [
+      4546811
+    ],
+    "method": "export or export trampoline"
+  },
+  {
+    "iat": 4595812,
+    "target": 18106340,
+    "exports": [
+      [
+        "kernel32.dll",
+        "HeapDestroy"
+      ]
+    ],
+    "refs": [
+      4534460
+    ],
+    "method": "export or export trampoline"
+  },
+  {
+    "iat": 4595816,
+    "target": 18106352,
+    "exports": [
+      [
+        "kernel32.dll",
+        "HeapCreate"
+      ]
+    ],
+    "refs": [
+      4534397
+    ],
+    "method": "export or export trampoline"
+  },
+  {
+    "iat": 4595820,
+    "target": 18106364,
+    "exports": [
+      [
+        "kernel32.dll",
+        "LCMapStringW"
+      ]
+    ],
+    "refs": [
+      4537403,
+      4537670,
+      4537721,
+      4537825
+    ],
+    "method": "export or export trampoline"
+  },
+  {
+    "iat": 4595824,
+    "target": 18106376,
+    "exports": [
+      [
+        "kernel32.dll",
+        "SetHandleCount"
+      ]
+    ],
+    "refs": [
+      4533993
+    ],
+    "method": "export or export trampoline"
+  },
+  {
+    "iat": 4595828,
+    "target": 18106388,
+    "exports": [
+      [
+        "kernel32.dll",
+        "GetEnvironmentStringsW"
+      ]
+    ],
+    "refs": [],
+    "method": "export or export trampoline"
+  },
+  {
+    "iat": 4595832,
+    "target": 18106400,
+    "exports": [
+      [
+        "kernel32.dll",
+        "GetEnvironmentStrings"
+      ]
+    ],
+    "refs": [
+      4533321,
+      4533499
+    ],
+    "method": "export or export trampoline"
+  },
+  {
+    "iat": 4595836,
+    "target": 18106412,
+    "exports": [
+      [
+        "kernel32.dll",
+        "WideCharToMultiByte"
+      ]
+    ],
+    "refs": [
+      4537862,
+      4545780
+    ],
+    "method": "export or export trampoline"
+  },
+  {
+    "iat": 4595840,
+    "target": 18106424,
+    "exports": [
+      [
+        "kernel32.dll",
+        "FreeEnvironmentStringsW"
+      ]
+    ],
+    "refs": [
+      4533480
+    ],
+    "method": "export or export trampoline"
+  },
+  {
+    "iat": 4595844,
+    "target": 18106436,
+    "exports": [
+      [
+        "kernel32.dll",
+        "FreeEnvironmentStringsA"
+      ]
+    ],
+    "refs": [
+      4533561
+    ],
+    "method": "export or export trampoline"
+  },
+  {
+    "iat": 4595848,
+    "target": 18106448,
+    "exports": [
+      [
+        "kernel32.dll",
+        "UnhandledExceptionFilter"
+      ]
+    ],
+    "refs": [
+      4532336
+    ],
+    "method": "export or export trampoline"
+  },
+  {
+    "iat": 4595852,
+    "target": 18106460,
+    "exports": [
+      [
+        "ntdll.dll",
+        "RtlSizeHeap"
+      ]
+    ],
+    "refs": [
+      4529680
+    ],
+    "method": "export or export trampoline"
+  },
+  {
+    "iat": 4595856,
+    "target": 18106472,
+    "exports": [
+      [
+        "ntdll.dll",
+        "RtlReAllocateHeap"
+      ]
+    ],
+    "refs": [
+      4529192,
+      4529477,
+      4529555,
+      4539809
+    ],
+    "method": "export or export trampoline"
+  },
+  {
+    "iat": 4595860,
+    "target": 18106484,
+    "exports": [
+      [
+        "ntdll.dll",
+        "RtlAllocateHeap"
+      ]
+    ],
+    "refs": [
+      4525007,
+      4525131,
+      4529118,
+      4529414,
+      4538081,
+      4539861,
+      4540988
+    ],
+    "method": "export or export trampoline"
+  },
+  {
+    "iat": 4595864,
+    "target": 18106496,
+    "exports": [
+      [
+        "kernel32.dll",
+        "HeapFree"
+      ]
+    ],
+    "refs": [
+      4523993,
+      4538892,
+      4539910,
+      4541266,
+      4541348
+    ],
+    "method": "export or export trampoline"
+  },
+  {
+    "iat": 4595868,
+    "target": 18106508,
+    "exports": [
+      [
+        "kernel32.dll",
+        "VirtualAlloc"
+      ]
+    ],
+    "refs": [
+      4539887,
+      4540027,
+      4542030
+    ],
+    "method": "export or export trampoline"
+  },
+  {
+    "iat": 4595872,
+    "target": 18106520,
+    "exports": [
+      [
+        "kernel32.dll",
+        "MultiByteToWideChar"
+      ]
+    ],
+    "refs": [
+      4523197,
+      4537560,
+      4537648,
+      4547195,
+      4547281
+    ],
+    "method": "export or export trampoline"
+  },
+  {
+    "iat": 4595876,
+    "target": 18009652,
+    "exports": [
+      [
+        "kernel32.dll",
+        "GetVersion"
+      ]
+    ],
+    "refs": [
+      4520849
+    ],
+    "method": "inferred from callsite; needs validation"
+  },
+  {
+    "iat": 4595880,
+    "target": 18106532,
+    "exports": [
+      [
+        "kernel32.dll",
+        "GetStartupInfoA"
+      ]
+    ],
+    "refs": [
+      4520970,
+      4533669
+    ],
+    "method": "export or export trampoline"
+  },
+  {
+    "iat": 4595884,
+    "target": 18106544,
+    "exports": [
+      [
+        "kernel32.dll",
+        "TerminateProcess"
+      ]
+    ],
+    "refs": [
+      4519879
+    ],
+    "method": "export or export trampoline"
+  },
+  {
+    "iat": 4595888,
+    "target": 18106556,
+    "exports": [
+      [
+        "kernel32.dll",
+        "ExitProcess"
+      ]
+    ],
+    "refs": [
+      4520001,
+      4521123
+    ],
+    "method": "inferred from callsite; needs validation"
+  },
+  {
+    "iat": 4595892,
+    "target": 18106580,
+    "exports": [
+      [
+        "ntdll.dll",
+        "RtlUnwind"
+      ]
+    ],
+    "refs": [
+      4551148
+    ],
+    "method": "export or export trampoline"
+  },
+  {
+    "iat": 4595896,
+    "target": 18106592,
+    "exports": [
+      [
+        "kernel32.dll",
+        "IsBadWritePtr"
+      ]
+    ],
+    "refs": [
+      4544838
+    ],
+    "method": "export or export trampoline"
+  },
+  {
+    "iat": 4595900,
+    "target": 18106604,
+    "exports": [
+      [
+        "kernel32.dll",
+        "SetUnhandledExceptionFilter"
+      ]
+    ],
+    "refs": [
+      4544773,
+      4544791
+    ],
+    "method": "export or export trampoline"
+  },
+  {
+    "iat": 4595904,
+    "target": 18106616,
+    "exports": [
+      [
+        "kernel32.dll",
+        "IsBadReadPtr"
+      ]
+    ],
+    "refs": [
+      4544810
+    ],
+    "method": "export or export trampoline"
+  },
+  {
+    "iat": 4595908,
+    "target": 18106628,
+    "exports": [
+      [
+        "kernel32.dll",
+        "GetFileType"
+      ]
+    ],
+    "refs": [
+      4533835,
+      4533938
+    ],
+    "method": "export or export trampoline"
+  },
+  {
+    "iat": 4595912,
+    "target": 18106640,
+    "exports": [
+      [
+        "kernel32.dll",
+        "GetStdHandle"
+      ]
+    ],
+    "refs": [
+      4533924,
+      4534853
+    ],
+    "method": "export or export trampoline"
+  },
+  {
+    "iat": 4595916,
+    "target": 18106652,
+    "exports": [
+      [
+        "kernel32.dll",
+        "VirtualFree"
+      ]
+    ],
+    "refs": [
+      4541243,
+      4541294,
+      4541427
+    ],
+    "method": "export or export trampoline"
+  },
+  {
+    "iat": 4595920,
+    "target": 18106664,
+    "exports": [
+      [
+        "kernel32.dll",
+        "SystemTimeToFileTime"
+      ]
+    ],
+    "refs": [
+      4386280
+    ],
+    "method": "export or export trampoline"
+  },
+  {
+    "iat": 4595924,
+    "target": 18106676,
+    "exports": [
+      [
+        "kernel32.dll",
+        "CloseHandle"
+      ]
+    ],
+    "refs": [
+      4422412,
+      4422524,
+      4422615,
+      4423211,
+      4426033,
+      4426460,
+      4426783,
+      4429943,
+      4430325,
+      4464850,
+      4465225,
+      4534970
+    ],
+    "method": "export or export trampoline"
+  },
+  {
+    "iat": 4595928,
+    "target": 18009700,
+    "exports": [
+      [
+        "kernel32.dll",
+        "GetCurrentProcess"
+      ]
+    ],
+    "refs": [
+      4485785,
+      4519872
+    ],
+    "method": "inferred from callsite; needs validation"
+  },
+  {
+    "iat": 4595932,
+    "target": 18106688,
+    "exports": [
+      [
+        "kernel32.dll",
+        "GetVersionExA"
+      ]
+    ],
+    "refs": [
+      4534083
+    ],
+    "method": "export or export trampoline"
+  },
+  {
+    "iat": 4595936,
+    "target": 18106700,
+    "exports": [
+      [
+        "kernel32.dll",
+        "FindResourceA"
+      ]
+    ],
+    "refs": [
+      4473232
+    ],
+    "method": "export or export trampoline"
+  },
+  {
+    "iat": 4595940,
+    "target": 18106712,
+    "exports": [
+      [
+        "kernel32.dll",
+        "LoadResource"
+      ]
+    ],
+    "refs": [
+      4473267
+    ],
+    "method": "export or export trampoline"
+  },
+  {
+    "iat": 4595944,
+    "target": 18106724,
+    "exports": [
+      [
+        "kernel32.dll",
+        "Sleep"
+      ]
+    ],
+    "refs": [
+      4225693,
+      4460197
+    ],
+    "method": "export or export trampoline"
+  },
+  {
+    "iat": 4595948,
+    "target": 18008532,
+    "exports": [
+      [
+        "kernel32.dll",
+        "GetProcAddress"
+      ]
+    ],
+    "refs": [
+      4525293
+    ],
+    "method": "inferred from callsite; needs validation"
+  },
+  {
+    "iat": 4595952,
+    "target": 18106736,
+    "exports": [
+      [
+        "kernel32.dll",
+        "LoadLibraryA"
+      ]
+    ],
+    "refs": [
+      4546506
+    ],
+    "method": "export or export trampoline"
+  },
+  {
+    "iat": 4595956,
+    "target": 18106748,
+    "exports": [
+      [
+        "kernel32.dll",
+        "GetEnvironmentVariableA"
+      ]
+    ],
+    "refs": [
+      4534136
+    ],
+    "method": "export or export trampoline"
+  },
+  {
+    "iat": 4595960,
+    "target": 18009624,
+    "exports": [
+      [
+        "kernel32.dll",
+        "GetModuleHandleA"
+      ]
+    ],
+    "refs": [
+      4350826,
+      4350859,
+      4392591,
+      4426219,
+      4426843,
+      4485945,
+      4521005,
+      4525277,
+      4534017
+    ],
+    "method": "inferred from callsite; needs validation"
+  },
+  {
+    "iat": 4595964,
+    "target": 18106760,
+    "exports": [
+      [
+        "kernel32.dll",
+        "CreateProcessA"
+      ]
+    ],
+    "refs": [
+      4346524
+    ],
+    "method": "export or export trampoline"
+  },
+  {
+    "iat": 4595968,
+    "target": 18106772,
+    "exports": [
+      [
+        "kernel32.dll",
+        "GetModuleFileNameA"
+      ]
+    ],
+    "refs": [
+      4346467,
+      4346623,
+      4386544,
+      4426392,
+      4466538,
+      4467234,
+      4532720,
+      4534232,
+      4534639
+    ],
+    "method": "export or export trampoline"
+  },
+  {
+    "iat": 4595972,
+    "target": 18106784,
+    "exports": [
+      [
+        "kernel32.dll",
+        "ReleaseMutex"
+      ]
+    ],
+    "refs": [
+      4346438
+    ],
+    "method": "export or export trampoline"
+  },
+  {
+    "iat": 4595976,
+    "target": 18106796,
+    "exports": [
+      [
+        "kernel32.dll",
+        "FindClose"
+      ]
+    ],
+    "refs": [
+      4346583
+    ],
+    "method": "export or export trampoline"
+  },
+  {
+    "iat": 4595980,
+    "target": 18106808,
+    "exports": [
+      [
+        "kernel32.dll",
+        "lstrcpy"
+      ],
+      [
+        "kernel32.dll",
+        "lstrcpyA"
+      ]
+    ],
+    "refs": [
+      4346576,
+      4346640,
+      4346947,
+      4347352,
+      4348706,
+      4348815,
+      4349371,
+      4349989,
+      4350406,
+      4350447,
+      4350660
+    ],
+    "method": "export or export trampoline"
+  },
+  {
+    "iat": 4595984,
+    "target": 18106820,
+    "exports": [
+      [
+        "kernel32.dll",
+        "FindFirstFileA"
+      ]
+    ],
+    "refs": [
+      4346553
+    ],
+    "method": "export or export trampoline"
+  },
+  {
+    "iat": 4595988,
+    "target": 18106832,
+    "exports": [
+      [
+        "kernel32.dll",
+        "lstrcat"
+      ],
+      [
+        "kernel32.dll",
+        "lstrcatA"
+      ]
+    ],
+    "refs": [
+      4346711
+    ],
+    "method": "export or export trampoline"
+  },
+  {
+    "iat": 4595992,
+    "target": 18106844,
+    "exports": [
+      [
+        "kernel32.dll",
+        "lstrlenA"
+      ]
+    ],
+    "refs": [
+      4347316,
+      4349949
+    ],
+    "method": "export or export trampoline"
+  },
+  {
+    "iat": 4595996,
+    "target": 18106856,
+    "exports": [
+      [
+        "kernel32.dll",
+        "lstrcmpiA"
+      ]
+    ],
+    "refs": [
+      4346910,
+      4349073
+    ],
+    "method": "export or export trampoline"
+  },
+  {
+    "iat": 4596000,
+    "target": 18106868,
+    "exports": [
+      [
+        "kernel32.dll",
+        "GlobalUnlock"
+      ]
+    ],
+    "refs": [
+      4347359
+    ],
+    "method": "export or export trampoline"
+  },
+  {
+    "iat": 4596004,
+    "target": 18106880,
+    "exports": [
+      [
+        "kernel32.dll",
+        "GlobalLock"
+      ]
+    ],
+    "refs": [
+      4347338
+    ],
+    "method": "export or export trampoline"
+  },
+  {
+    "iat": 4596008,
+    "target": 18106892,
+    "exports": [
+      [
+        "kernel32.dll",
+        "GlobalAlloc"
+      ]
+    ],
+    "refs": [
+      4347329
+    ],
+    "method": "export or export trampoline"
+  },
+  {
+    "iat": 4596012,
+    "target": 18009720,
+    "exports": [
+      [
+        "kernel32.dll",
+        "GetCommandLineA"
+      ]
+    ],
+    "refs": [
+      4349036,
+      4520927
+    ],
+    "method": "inferred from callsite; needs validation"
+  },
+  {
+    "iat": 4596016,
+    "target": 18106904,
+    "exports": [
+      [
+        "kernel32.dll",
+        "GetSystemInfo"
+      ]
+    ],
+    "refs": [
+      4350047,
+      4485801
+    ],
+    "method": "export or export trampoline"
+  },
+  {
+    "iat": 4596020,
+    "target": 18106916,
+    "exports": [
+      [
+        "kernel32.dll",
+        "GetProfileIntA"
+      ]
+    ],
+    "refs": [
+      4350328
+    ],
+    "method": "export or export trampoline"
+  },
+  {
+    "iat": 4596024,
+    "target": 18106928,
+    "exports": [
+      [
+        "kernel32.dll",
+        "WriteProfileStringA"
+      ]
+    ],
+    "refs": [
+      4350593,
+      4350788
+    ],
+    "method": "export or export trampoline"
+  },
+  {
+    "iat": 4596028,
+    "target": 18106940,
+    "exports": [
+      [
+        "kernel32.dll",
+        "GetTickCount"
+      ]
+    ],
+    "refs": [
+      4386160,
+      4386240
+    ],
+    "method": "export or export trampoline"
+  },
+  {
+    "iat": 4596032,
+    "target": 18106952,
+    "exports": [
+      [
+        "kernel32.dll",
+        "SetFilePointer"
+      ]
+    ],
+    "refs": [
+      4465693,
+      4465722,
+      4465757,
+      4544980
+    ],
+    "method": "export or export trampoline"
+  },
+  {
+    "iat": 4596036,
+    "target": 18009736,
+    "exports": [
+      [
+        "kernel32.dll",
+        "LockResource"
+      ]
+    ],
+    "refs": [
+      4473274
+    ],
+    "method": "inferred from callsite; needs validation"
+  },
+  {
+    "iat": 4596040,
+    "target": 18106964,
+    "exports": [
+      [
+        "kernel32.dll",
+        "ReadFile"
+      ]
+    ],
+    "refs": [
+      4429936,
+      4465285,
+      4465333,
+      4465381,
+      4465557,
+      4465647
+    ],
+    "method": "export or export trampoline"
+  },
+  {
+    "iat": 4596044,
+    "target": 18106976,
+    "exports": [
+      [
+        "kernel32.dll",
+        "GetFileSize"
+      ]
+    ],
+    "refs": [
+      4429891,
+      4465244
+    ],
+    "method": "export or export trampoline"
+  },
+  {
+    "iat": 4596048,
+    "target": 18106988,
+    "exports": [
+      [
+        "kernel32.dll",
+        "CreateFileA"
+      ]
+    ],
+    "refs": [
+      4429871,
+      4464947,
+      4465068,
+      4465183
+    ],
+    "method": "export or export trampoline"
+  },
+  {
+    "iat": 4596052,
+    "target": 18107000,
+    "exports": [
+      [
+        "kernel32.dll",
+        "CreateEventA"
+      ]
+    ],
+    "refs": [
+      4422819
+    ],
+    "method": "export or export trampoline"
+  },
+  {
+    "iat": 4596056,
+    "target": 18107012,
+    "exports": [
+      [
+        "kernel32.dll",
+        "GetSystemTime"
+      ]
+    ],
+    "refs": [
+      4386264
+    ],
+    "method": "export or export trampoline"
+  },
+  {
+    "iat": 4596060,
+    "target": 18107024,
+    "exports": [
+      [
+        "kernel32.dll",
+        "GetLastError"
+      ]
+    ],
+    "refs": [
+      4392615,
+      4425885,
+      4523071,
+      4534980,
+      4544993,
+      4545348,
+      4545393,
+      4546965
+    ],
+    "method": "export or export trampoline"
+  },
+  {
+    "iat": 4596064,
+    "target": 18107036,
+    "exports": [
+      [
+        "kernel32.dll",
+        "FlushFileBuffers"
+      ]
+    ],
+    "refs": [
+      4422402,
+      4422514,
+      4422605,
+      4422904,
+      4422960,
+      4423201,
+      4546955
+    ],
+    "method": "export or export trampoline"
+  },
+  {
+    "iat": 4596068,
+    "target": 18107048,
+    "exports": [
+      [
+        "kernel32.dll",
+        "CreateThread"
+      ]
+    ],
+    "refs": [
+      4422693,
+      4423083,
+      4423293,
+      4423582
+    ],
+    "method": "export or export trampoline"
+  },
+  {
+    "iat": 4596072,
+    "target": 18107060,
+    "exports": [
+      [
+        "kernel32.dll",
+        "WaitForSingleObject"
+      ]
+    ],
+    "refs": [
+      4422857,
+      4424061
+    ],
+    "method": "export or export trampoline"
+  },
+  {
+    "iat": 4596076,
+    "target": 18107072,
+    "exports": [
+      [
+        "kernel32.dll",
+        "ConnectNamedPipe"
+      ]
+    ],
+    "refs": [
+      4422841
+    ],
+    "method": "export or export trampoline"
+  },
+  {
+    "iat": 4596080,
+    "target": 18107084,
+    "exports": [
+      [
+        "kernel32.dll",
+        "GlobalMemoryStatus"
+      ]
+    ],
+    "refs": [
+      4426371
+    ],
+    "method": "export or export trampoline"
+  },
+  {
+    "iat": 4596084,
+    "target": 18107096,
+    "exports": [
+      [
+        "kernel32.dll",
+        "CreateNamedPipeA"
+      ]
+    ],
+    "refs": [
+      4422759
+    ],
+    "method": "export or export trampoline"
+  },
+  {
+    "iat": 4596088,
+    "target": 18107108,
+    "exports": [
+      [
+        "kernel32.dll",
+        "WriteFile"
+      ]
+    ],
+    "refs": [
+      4423162,
+      4423361,
+      4430305,
+      4465443,
+      4465491,
+      4465523,
+      4465589,
+      4534860,
+      4545271,
+      4545372
+    ],
+    "method": "export or export trampoline"
+  },
+  {
+    "iat": 4596092,
+    "target": 18107120,
+    "exports": [
+      [
+        "kernel32.dll",
+        "GetModuleFileNameW"
+      ]
+    ],
+    "refs": [
+      4424204,
+      4425056
+    ],
+    "method": "export or export trampoline"
+  },
+  {
+    "iat": 4596096,
+    "target": 18107132,
+    "exports": [
+      [
+        "kernel32.dll",
+        "CreateMutexA"
+      ]
+    ],
+    "refs": [
+      4425875
+    ],
+    "method": "export or export trampoline"
+  },
+  {
+    "iat": 4596100,
+    "target": 18107144,
+    "exports": [
+      [
+        "kernel32.dll",
+        "GetLocalTime"
+      ]
+    ],
+    "refs": [
+      4427221
+    ],
+    "method": "export or export trampoline"
+  },
+  {
+    "iat": 4596104,
+    "target": 18107156,
+    "exports": [
+      [
+        "kernel32.dll",
+        "GetUserDefaultLangID"
+      ]
+    ],
+    "refs": [
+      4436640
+    ],
+    "method": "export or export trampoline"
+  },
+  {
+    "iat": 4596112,
+    "target": 3756176,
+    "exports": [
+      [
+        "libmysql.dll",
+        "mysql_init"
+      ]
+    ],
+    "refs": [
+      4518182
+    ],
+    "method": "export or export trampoline"
+  },
+  {
+    "iat": 4596116,
+    "target": 3760592,
+    "exports": [
+      [
+        "libmysql.dll",
+        "mysql_close"
+      ]
+    ],
+    "refs": [
+      4518188
+    ],
+    "method": "export or export trampoline"
+  },
+  {
+    "iat": 4596120,
+    "target": 3765824,
+    "exports": [
+      [
+        "libmysql.dll",
+        "mysql_field_count"
+      ]
+    ],
+    "refs": [
+      4518194
+    ],
+    "method": "export or export trampoline"
+  },
+  {
+    "iat": 4596124,
+    "target": 3763040,
+    "exports": [
+      [
+        "libmysql.dll",
+        "mysql_store_result"
+      ]
+    ],
+    "refs": [
+      4518200
+    ],
+    "method": "export or export trampoline"
+  },
+  {
+    "iat": 4596128,
+    "target": 3760896,
+    "exports": [
+      [
+        "libmysql.dll",
+        "mysql_query"
+      ]
+    ],
+    "refs": [
+      4518206
+    ],
+    "method": "export or export trampoline"
+  },
+  {
+    "iat": 4596132,
+    "target": 3755632,
+    "exports": [
+      [
+        "libmysql.dll",
+        "mysql_free_result"
+      ]
+    ],
+    "refs": [
+      4518212
+    ],
+    "method": "export or export trampoline"
+  },
+  {
+    "iat": 4596136,
+    "target": 3756560,
+    "exports": [
+      [
+        "libmysql.dll",
+        "mysql_real_connect"
+      ]
+    ],
+    "refs": [
+      4518176
+    ],
+    "method": "export or export trampoline"
+  },
+  {
+    "iat": 4596140,
+    "target": 3765904,
+    "exports": [
+      [
+        "libmysql.dll",
+        "mysql_errno"
+      ]
+    ],
+    "refs": [
+      4518254
+    ],
+    "method": "export or export trampoline"
+  },
+  {
+    "iat": 4596144,
+    "target": 3765920,
+    "exports": [
+      [
+        "libmysql.dll",
+        "mysql_error"
+      ]
+    ],
+    "refs": [
+      4518248
+    ],
+    "method": "export or export trampoline"
+  },
+  {
+    "iat": 4596148,
+    "target": 3763632,
+    "exports": [
+      [
+        "libmysql.dll",
+        "mysql_fetch_row"
+      ]
+    ],
+    "refs": [
+      4518218
+    ],
+    "method": "export or export trampoline"
+  },
+  {
+    "iat": 4596152,
+    "target": 3765696,
+    "exports": [
+      [
+        "libmysql.dll",
+        "mysql_num_rows"
+      ]
+    ],
+    "refs": [
+      4518242
+    ],
+    "method": "export or export trampoline"
+  },
+  {
+    "iat": 4596156,
+    "target": 3765712,
+    "exports": [
+      [
+        "libmysql.dll",
+        "mysql_num_fields"
+      ]
+    ],
+    "refs": [
+      4518236
+    ],
+    "method": "export or export trampoline"
+  },
+  {
+    "iat": 4596160,
+    "target": 3764144,
+    "exports": [
+      [
+        "libmysql.dll",
+        "mysql_field_seek"
+      ]
+    ],
+    "refs": [
+      4518230
+    ],
+    "method": "export or export trampoline"
+  },
+  {
+    "iat": 4596164,
+    "target": 3763584,
+    "exports": [
+      [
+        "libmysql.dll",
+        "mysql_fetch_field"
+      ]
+    ],
+    "refs": [
+      4518224
+    ],
+    "method": "export or export trampoline"
+  },
+  {
+    "iat": 4596172,
+    "target": 556823081,
+    "exports": [
+      [
+        "rapi.dll",
+        "CeRapiInitEx"
+      ],
+      [
+        "rapi.dll",
+        "PegRapiInitEx"
+      ]
+    ],
+    "refs": [
+      4457264
+    ],
+    "method": "export or export trampoline"
+  },
+  {
+    "iat": 4596176,
+    "target": 556825967,
+    "exports": [
+      [
+        "rapi.dll",
+        "CeCloseHandle"
+      ],
+      [
+        "rapi.dll",
+        "PegCloseHandle"
+      ]
+    ],
+    "refs": [
+      4458038
+    ],
+    "method": "export or export trampoline"
+  },
+  {
+    "iat": 4596180,
+    "target": 556811092,
+    "exports": [
+      [
+        "rapi.dll",
+        "CeGetFileSize"
+      ],
+      [
+        "rapi.dll",
+        "PegGetFileSize"
+      ]
+    ],
+    "refs": [
+      4458044
+    ],
+    "method": "export or export trampoline"
+  },
+  {
+    "iat": 4596184,
+    "target": 556825008,
+    "exports": [
+      [
+        "rapi.dll",
+        "CeReadFile"
+      ],
+      [
+        "rapi.dll",
+        "PegReadFile"
+      ]
+    ],
+    "refs": [
+      4458032
+    ],
+    "method": "export or export trampoline"
+  },
+  {
+    "iat": 4596188,
+    "target": 556836800,
+    "exports": [
+      [
+        "rapi.dll",
+        "CeRegCloseKey"
+      ],
+      [
+        "rapi.dll",
+        "PegRegCloseKey"
+      ]
+    ],
+    "refs": [
+      4458056
+    ],
+    "method": "export or export trampoline"
+  },
+  {
+    "iat": 4596192,
+    "target": 556814449,
+    "exports": [
+      [
+        "rapi.dll",
+        "CeRegQueryValueEx"
+      ],
+      [
+        "rapi.dll",
+        "PegRegQueryValueEx"
+      ]
+    ],
+    "refs": [
+      4458062
+    ],
+    "method": "export or export trampoline"
+  },
+  {
+    "iat": 4596196,
+    "target": 556824610,
+    "exports": [
+      [
+        "rapi.dll",
+        "CeCreateFile"
+      ],
+      [
+        "rapi.dll",
+        "PegCreateFile"
+      ]
+    ],
+    "refs": [
+      4458050
+    ],
+    "method": "export or export trampoline"
+  },
+  {
+    "iat": 4596200,
+    "target": 556825485,
+    "exports": [
+      [
+        "rapi.dll",
+        "CeWriteFile"
+      ],
+      [
+        "rapi.dll",
+        "PegWriteFile"
+      ]
+    ],
+    "refs": [
+      4458074
+    ],
+    "method": "export or export trampoline"
+  },
+  {
+    "iat": 4596204,
+    "target": 556836103,
+    "exports": [
+      [
+        "rapi.dll",
+        "CeRegOpenKeyEx"
+      ],
+      [
+        "rapi.dll",
+        "PegRegOpenKeyEx"
+      ]
+    ],
+    "refs": [
+      4458068
+    ],
+    "method": "export or export trampoline"
+  },
+  {
+    "iat": 4596208,
+    "target": 556823120,
+    "exports": [
+      [
+        "rapi.dll",
+        "CeRapiUninit"
+      ],
+      [
+        "rapi.dll",
+        "PegRapiUninit"
+      ]
+    ],
+    "refs": [
+      4457270
+    ],
+    "method": "export or export trampoline"
+  },
+  {
+    "iat": 4596216,
+    "target": 268846304,
+    "exports": [
+      [
+        "shell32.dll",
+        "ShellExecuteA"
+      ]
+    ],
+    "refs": [
+      4349009
+    ],
+    "method": "export or export trampoline"
+  },
+  {
+    "iat": 4596224,
+    "target": 18107168,
+    "exports": [
+      [
+        "user32.dll",
+        "GetKeyboardType"
+      ]
+    ],
+    "refs": [],
+    "method": "export or export trampoline"
+  },
+  {
+    "iat": 4596228,
+    "target": 18107180,
+    "exports": [
+      [
+        "user32.dll",
+        "GetClientRect"
+      ]
+    ],
+    "refs": [
+      4392328
+    ],
+    "method": "export or export trampoline"
+  },
+  {
+    "iat": 4596232,
+    "target": 18107192,
+    "exports": [
+      [
+        "user32.dll",
+        "CreateWindowExA"
+      ]
+    ],
+    "refs": [
+      4392306
+    ],
+    "method": "export or export trampoline"
+  },
+  {
+    "iat": 4596236,
+    "target": 18107204,
+    "exports": [
+      [
+        "user32.dll",
+        "AdjustWindowRectEx"
+      ]
+    ],
+    "refs": [
+      4392198
+    ],
+    "method": "export or export trampoline"
+  },
+  {
+    "iat": 4596240,
+    "target": 18107216,
+    "exports": [
+      [
+        "user32.dll",
+        "ReleaseDC"
+      ]
+    ],
+    "refs": [
+      4392693,
+      4392981,
+      4393417
+    ],
+    "method": "export or export trampoline"
+  },
+  {
+    "iat": 4596244,
+    "target": 18107228,
+    "exports": [
+      [
+        "user32.dll",
+        "MessageBeep"
+      ]
+    ],
+    "refs": [
+      4349130
+    ],
+    "method": "export or export trampoline"
+  },
+  {
+    "iat": 4596248,
+    "target": 18107240,
+    "exports": [
+      [
+        "user32.dll",
+        "LoadBitmapA"
+      ]
+    ],
+    "refs": [
+      4392603
+    ],
+    "method": "export or export trampoline"
+  },
+  {
+    "iat": 4596252,
+    "target": 18009784,
+    "exports": [
+      [
+        "user32.dll",
+        "DialogBoxParamA"
+      ]
+    ],
+    "refs": [
+      4349514
+    ],
+    "method": "inferred from callsite; needs validation"
+  },
+  {
+    "iat": 4596256,
+    "target": 18107252,
+    "exports": [
+      [
+        "user32.dll",
+        "UpdateWindow"
+      ]
+    ],
+    "refs": [
+      4392557
+    ],
+    "method": "export or export trampoline"
+  },
+  {
+    "iat": 4596260,
+    "target": 18107264,
+    "exports": [
+      [
+        "user32.dll",
+        "ShowWindow"
+      ]
+    ],
+    "refs": [
+      4392550,
+      4394020,
+      4394159,
+      4459059
+    ],
+    "method": "export or export trampoline"
+  },
+  {
+    "iat": 4596264,
+    "target": 18107276,
+    "exports": [
+      [
+        "user32.dll",
+        "ChangeDisplaySettingsA"
+      ]
+    ],
+    "refs": [
+      4392821,
+      4393803,
+      4393933,
+      4394039
+    ],
+    "method": "export or export trampoline"
+  },
+  {
+    "iat": 4596268,
+    "target": 18107288,
+    "exports": [
+      [
+        "user32.dll",
+        "GetSystemMetrics"
+      ]
+    ],
+    "refs": [],
+    "method": "export or export trampoline"
+  },
+  {
+    "iat": 4596272,
+    "target": 18107300,
+    "exports": [
+      [
+        "user32.dll",
+        "OpenClipboard"
+      ]
+    ],
+    "refs": [
+      4347289
+    ],
+    "method": "export or export trampoline"
+  },
+  {
+    "iat": 4596276,
+    "target": 18107312,
+    "exports": [
+      [
+        "user32.dll",
+        "CloseWindow"
+      ]
+    ],
+    "refs": [
+      4339335
+    ],
+    "method": "export or export trampoline"
+  },
+  {
+    "iat": 4596280,
+    "target": 18107324,
+    "exports": [
+      [
+        "user32.dll",
+        "GetDC"
+      ]
+    ],
+    "refs": [
+      4392624,
+      4392937,
+      4393292
+    ],
+    "method": "export or export trampoline"
+  },
+  {
+    "iat": 4596284,
+    "target": 18107336,
+    "exports": [
+      [
+        "user32.dll",
+        "CloseClipboard"
+      ]
+    ],
+    "refs": [
+      4347373
+    ],
+    "method": "export or export trampoline"
+  },
+  {
+    "iat": 4596288,
+    "target": 18107348,
+    "exports": [
+      [
+        "user32.dll",
+        "LoadIconA"
+      ]
+    ],
+    "refs": [],
+    "method": "export or export trampoline"
+  },
+  {
+    "iat": 4596292,
+    "target": 18107360,
+    "exports": [
+      [
+        "user32.dll",
+        "RegisterWindowMessageA"
+      ]
+    ],
+    "refs": [
+      4425981
+    ],
+    "method": "export or export trampoline"
+  },
+  {
+    "iat": 4596296,
+    "target": 18107372,
+    "exports": [
+      [
+        "ntdll.dll",
+        "NtdllDefWindowProc_A"
+      ],
+      [
+        "user32.dll",
+        "DefWindowProcA"
+      ]
+    ],
+    "refs": [
+      4459753
+    ],
+    "method": "export or export trampoline"
+  },
+  {
+    "iat": 4596300,
+    "target": 18107384,
+    "exports": [
+      [
+        "user32.dll",
+        "EndPaint"
+      ]
+    ],
+    "refs": [
+      4459228
+    ],
+    "method": "export or export trampoline"
+  },
+  {
+    "iat": 4596304,
+    "target": 18107396,
+    "exports": [
+      [
+        "user32.dll",
+        "BeginPaint"
+      ]
+    ],
+    "refs": [
+      4459216
+    ],
+    "method": "export or export trampoline"
+  },
+  {
+    "iat": 4596308,
+    "target": 18107408,
+    "exports": [
+      [
+        "user32.dll",
+        "PostQuitMessage"
+      ]
+    ],
+    "refs": [
+      4459175
+    ],
+    "method": "export or export trampoline"
+  },
+  {
+    "iat": 4596312,
+    "target": 18107420,
+    "exports": [
+      [
+        "user32.dll",
+        "SetForegroundWindow"
+      ]
+    ],
+    "refs": [
+      4459066
+    ],
+    "method": "export or export trampoline"
+  },
+  {
+    "iat": 4596316,
+    "target": 18107432,
+    "exports": [
+      [
+        "user32.dll",
+        "DispatchMessageA"
+      ]
+    ],
+    "refs": [],
+    "method": "export or export trampoline"
+  },
+  {
+    "iat": 4596320,
+    "target": 18107444,
+    "exports": [
+      [
+        "user32.dll",
+        "TranslateMessage"
+      ]
+    ],
+    "refs": [],
+    "method": "export or export trampoline"
+  },
+  {
+    "iat": 4596324,
+    "target": 18107456,
+    "exports": [
+      [
+        "user32.dll",
+        "PeekMessageA"
+      ]
+    ],
+    "refs": [],
+    "method": "export or export trampoline"
+  },
+  {
+    "iat": 4596328,
+    "target": 18107468,
+    "exports": [
+      [
+        "user32.dll",
+        "SendMessageA"
+      ]
+    ],
+    "refs": [],
+    "method": "export or export trampoline"
+  },
+  {
+    "iat": 4596332,
+    "target": 18107480,
+    "exports": [
+      [
+        "user32.dll",
+        "EndDialog"
+      ]
+    ],
+    "refs": [
+      4348023
+    ],
+    "method": "export or export trampoline"
+  },
+  {
+    "iat": 4596336,
+    "target": 18107492,
+    "exports": [
+      [
+        "user32.dll",
+        "SetDlgItemTextA"
+      ]
+    ],
+    "refs": [
+      4348084,
+      4348374
+    ],
+    "method": "export or export trampoline"
+  },
+  {
+    "iat": 4596340,
+    "target": 18107504,
+    "exports": [
+      [
+        "user32.dll",
+        "SystemParametersInfoA"
+      ]
+    ],
+    "refs": [
+      4348098,
+      4348408
+    ],
+    "method": "export or export trampoline"
+  },
+  {
+    "iat": 4596344,
+    "target": 18107516,
+    "exports": [
+      [
+        "user32.dll",
+        "EmptyClipboard"
+      ]
+    ],
+    "refs": [
+      4347303
+    ],
+    "method": "export or export trampoline"
+  },
+  {
+    "iat": 4596348,
+    "target": 18107528,
+    "exports": [
+      [
+        "user32.dll",
+        "GetWindowTextA"
+      ]
+    ],
+    "refs": [
+      4348182,
+      4348482
+    ],
+    "method": "export or export trampoline"
+  },
+  {
+    "iat": 4596352,
+    "target": 18107540,
+    "exports": [
+      [
+        "user32.dll",
+        "SetClipboardData"
+      ]
+    ],
+    "refs": [
+      4347367
+    ],
+    "method": "export or export trampoline"
+  },
+  {
+    "iat": 4596356,
+    "target": 18107552,
+    "exports": [
+      [
+        "user32.dll",
+        "LoadStringA"
+      ]
+    ],
+    "refs": [
+      4347486,
+      4349449,
+      4350882,
+      4351025,
+      4351089,
+      4351142
+    ],
+    "method": "export or export trampoline"
+  },
+  {
+    "iat": 4596360,
+    "target": 18107564,
+    "exports": [
+      [
+        "user32.dll",
+        "GetDlgItemTextA"
+      ]
+    ],
+    "refs": [
+      4347401,
+      4347417
+    ],
+    "method": "export or export trampoline"
+  },
+  {
+    "iat": 4596364,
+    "target": 18107576,
+    "exports": [
+      [
+        "user32.dll",
+        "GetWindowLongA"
+      ]
+    ],
+    "refs": [
+      4347465
+    ],
+    "method": "export or export trampoline"
+  },
+  {
+    "iat": 4596368,
+    "target": 18107588,
+    "exports": [
+      [
+        "user32.dll",
+        "IsWindowEnabled"
+      ]
+    ],
+    "refs": [
+      4347852
+    ],
+    "method": "export or export trampoline"
+  },
+  {
+    "iat": 4596372,
+    "target": 18107600,
+    "exports": [
+      [
+        "user32.dll",
+        "MessageBoxA"
+      ]
+    ],
+    "refs": [
+      4347509,
+      4386318
+    ],
+    "method": "export or export trampoline"
+  },
+  {
+    "iat": 4596376,
+    "target": 18107612,
+    "exports": [
+      [
+        "user32.dll",
+        "GetDlgItem"
+      ]
+    ],
+    "refs": [
+      4348387
+    ],
+    "method": "export or export trampoline"
+  },
+  {
+    "iat": 4596380,
+    "target": 18107624,
+    "exports": [
+      [
+        "user32.dll",
+        "RegisterClassA"
+      ]
+    ],
+    "refs": [
+      4426299,
+      4426923
+    ],
+    "method": "export or export trampoline"
+  },
+  {
+    "iat": 4596384,
+    "target": 18107636,
+    "exports": [
+      [
+        "user32.dll",
+        "EnableWindow"
+      ]
+    ],
+    "refs": [
+      4348394
+    ],
+    "method": "export or export trampoline"
+  },
+  {
+    "iat": 4596388,
+    "target": 18107648,
+    "exports": [
+      [
+        "user32.dll",
+        "LoadCursorA"
+      ]
+    ],
+    "refs": [
+      4426268,
+      4426892
+    ],
+    "method": "export or export trampoline"
+  },
+  {
+    "iat": 4596392,
+    "target": 18107660,
+    "exports": [
+      [
+        "user32.dll",
+        "DestroyWindow"
+      ]
+    ],
+    "refs": [
+      4393552,
+      4393635,
+      4426953,
+      4459136
+    ],
+    "method": "export or export trampoline"
+  },
+  {
+    "iat": 4596396,
+    "target": 18107672,
+    "exports": [
+      [
+        "user32.dll",
+        "PostMessageA"
+      ]
+    ],
+    "refs": [
+      4394197,
+      4426018
+    ],
+    "method": "export or export trampoline"
+  },
+  {
+    "iat": 4596400,
+    "target": 18107684,
+    "exports": [
+      [
+        "user32.dll",
+        "SetWindowPos"
+      ]
+    ],
+    "refs": [
+      4348161,
+      4348467
+    ],
+    "method": "export or export trampoline"
+  },
+  {
+    "iat": 4596404,
+    "target": 18107696,
+    "exports": [
+      [
+        "user32.dll",
+        "GetWindowRect"
+      ]
+    ],
+    "refs": [
+      4348111,
+      4348419
+    ],
+    "method": "export or export trampoline"
+  },
+  {
+    "iat": 4596408,
+    "target": 18107708,
+    "exports": [
+      [
+        "user32.dll",
+        "SetWindowTextA"
+      ]
+    ],
+    "refs": [
+      4348225,
+      4348523
+    ],
+    "method": "export or export trampoline"
+  },
+  {
+    "iat": 4596416,
+    "target": 2139968464,
+    "exports": [
+      [
+        "ws2_32.dll",
+        "WSACleanup"
+      ]
+    ],
+    "refs": [
+      4457104
+    ],
+    "method": "export or export trampoline"
+  },
+  {
+    "iat": 4596420,
+    "target": 2139984240,
+    "exports": [
+      [
+        "ws2_32.dll",
+        "WSAStartup"
+      ]
+    ],
+    "refs": [
+      4457110
+    ],
+    "method": "export or export trampoline"
+  },
+  {
+    "iat": 4596424,
+    "target": 2140018608,
+    "exports": [
+      [
+        "ws2_32.dll",
+        "recv"
+      ]
+    ],
+    "refs": [
+      4457116
+    ],
+    "method": "export or export trampoline"
+  },
+  {
+    "iat": 4596428,
+    "target": 2140020624,
+    "exports": [
+      [
+        "ws2_32.dll",
+        "send"
+      ]
+    ],
+    "refs": [
+      4457122
+    ],
+    "method": "export or export trampoline"
+  },
+  {
+    "iat": 4596432,
+    "target": 2140025936,
+    "exports": [
+      [
+        "ws2_32.dll",
+        "shutdown"
+      ]
+    ],
+    "refs": [
+      4457128
+    ],
+    "method": "export or export trampoline"
+  },
+  {
+    "iat": 4596436,
+    "target": 2139992016,
+    "exports": [
+      [
+        "ws2_32.dll",
+        "connect"
+      ]
+    ],
+    "refs": [
+      4457134
+    ],
+    "method": "export or export trampoline"
+  },
+  {
+    "iat": 4596440,
+    "target": 2139991680,
+    "exports": [
+      [
+        "ws2_32.dll",
+        "closesocket"
+      ]
+    ],
+    "refs": [
+      4457140
+    ],
+    "method": "export or export trampoline"
+  },
+  {
+    "iat": 4596444,
+    "target": 2140006464,
+    "exports": [
+      [
+        "ws2_32.dll",
+        "gethostbyname"
+      ]
+    ],
+    "refs": [
+      4457146
+    ],
+    "method": "export or export trampoline"
+  },
+  {
+    "iat": 4596448,
+    "target": 2140015984,
+    "exports": [
+      [
+        "ws2_32.dll",
+        "htons"
+      ]
+    ],
+    "refs": [
+      4457152
+    ],
+    "method": "export or export trampoline"
+  },
+  {
+    "iat": 4596452,
+    "target": 2140015968,
+    "exports": [
+      [
+        "ws2_32.dll",
+        "htonl"
+      ]
+    ],
+    "refs": [
+      4457158
+    ],
+    "method": "export or export trampoline"
+  },
+  {
+    "iat": 4596456,
+    "target": 2140026320,
+    "exports": [
+      [
+        "ws2_32.dll",
+        "socket"
+      ]
+    ],
+    "refs": [
+      4457164
+    ],
+    "method": "export or export trampoline"
+  },
+  {
+    "iat": 4596464,
+    "target": 6072085,
+    "exports": [
+      [
+        "fmod.dll",
+        "_FMUSIC_PlaySong@4"
+      ]
+    ],
+    "refs": [
+      4473666
+    ],
+    "method": "export or export trampoline"
+  },
+  {
+    "iat": 4596468,
+    "target": 6072713,
+    "exports": [
+      [
+        "fmod.dll",
+        "_FMUSIC_StopSong@4"
+      ]
+    ],
+    "refs": [
+      4473660
+    ],
+    "method": "export or export trampoline"
+  },
+  {
+    "iat": 4596472,
+    "target": 6074535,
+    "exports": [
+      [
+        "fmod.dll",
+        "_FMUSIC_SetPaused@8"
+      ]
+    ],
+    "refs": [
+      4473654
+    ],
+    "method": "export or export trampoline"
+  },
+  {
+    "iat": 4596476,
+    "target": 6079093,
+    "exports": [
+      [
+        "fmod.dll",
+        "_FSOUND_Close@0"
+      ]
+    ],
+    "refs": [
+      4473648
+    ],
+    "method": "export or export trampoline"
+  },
+  {
+    "iat": 4596480,
+    "target": 6088228,
+    "exports": [
+      [
+        "fmod.dll",
+        "_FSOUND_SetMute@8"
+      ]
+    ],
+    "refs": [
+      4473532
+    ],
+    "method": "export or export trampoline"
+  },
+  {
+    "iat": 4596484,
+    "target": 6088541,
+    "exports": [
+      [
+        "fmod.dll",
+        "_FSOUND_SetPaused@8"
+      ]
+    ],
+    "refs": [
+      4473526
+    ],
+    "method": "export or export trampoline"
+  },
+  {
+    "iat": 4596488,
+    "target": 6089225,
+    "exports": [
+      [
+        "fmod.dll",
+        "_FSOUND_SetLoopMode@8"
+      ]
+    ],
+    "refs": [
+      4473520
+    ],
+    "method": "export or export trampoline"
+  },
+  {
+    "iat": 4596492,
+    "target": 6086943,
+    "exports": [
+      [
+        "fmod.dll",
+        "_FSOUND_SetVolume@8"
+      ]
+    ],
+    "refs": [
+      4473514
+    ],
+    "method": "export or export trampoline"
+  },
+  {
+    "iat": 4596496,
+    "target": 6086705,
+    "exports": [
+      [
+        "fmod.dll",
+        "_FSOUND_SetFrequency@8"
+      ]
+    ],
+    "refs": [
+      4473508
+    ],
+    "method": "export or export trampoline"
+  },
+  {
+    "iat": 4596500,
+    "target": 6088800,
+    "exports": [
+      [
+        "fmod.dll",
+        "_FSOUND_SetPriority@8"
+      ]
+    ],
+    "refs": [
+      4473502
+    ],
+    "method": "export or export trampoline"
+  },
+  {
+    "iat": 4596504,
+    "target": 6089706,
+    "exports": [
+      [
+        "fmod.dll",
+        "_FSOUND_IsPlaying@4"
+      ]
+    ],
+    "refs": [
+      4473496
+    ],
+    "method": "export or export trampoline"
+  },
+  {
+    "iat": 4596508,
+    "target": 6086531,
+    "exports": [
+      [
+        "fmod.dll",
+        "_FSOUND_StopSound@4"
+      ]
+    ],
+    "refs": [
+      4473490
+    ],
+    "method": "export or export trampoline"
+  },
+  {
+    "iat": 4596512,
+    "target": 6086043,
+    "exports": [
+      [
+        "fmod.dll",
+        "_FSOUND_PlaySoundEx@16"
+      ]
+    ],
+    "refs": [
+      4473484
+    ],
+    "method": "export or export trampoline"
+  },
+  {
+    "iat": 4596516,
+    "target": 6095645,
+    "exports": [
+      [
+        "fmod.dll",
+        "_FSOUND_Sample_Free@4"
+      ]
+    ],
+    "refs": [
+      4473478
+    ],
+    "method": "export or export trampoline"
+  },
+  {
+    "iat": 4596520,
+    "target": 6095965,
+    "exports": [
+      [
+        "fmod.dll",
+        "_FSOUND_Sample_Load@16"
+      ]
+    ],
+    "refs": [
+      4473472
+    ],
+    "method": "export or export trampoline"
+  },
+  {
+    "iat": 4596524,
+    "target": 6024204,
+    "exports": [
+      [
+        "fmod.dll",
+        "_FSOUND_SetMemorySystem@20"
+      ]
+    ],
+    "refs": [
+      4473544
+    ],
+    "method": "export or export trampoline"
+  },
+  {
+    "iat": 4596528,
+    "target": 6077720,
+    "exports": [
+      [
+        "fmod.dll",
+        "_FSOUND_Init@12"
+      ]
+    ],
+    "refs": [
+      4473538
+    ],
+    "method": "export or export trampoline"
+  }
+]
