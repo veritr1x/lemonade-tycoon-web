@@ -1,7 +1,7 @@
 # Lemonade Tycoon Ports
 
 [Play in your browser](https://veritr1x.github.io/lemonade-tycoon-web/) ·
-[Contribute](CONTRIBUTING.md) · [How it works](docs/architecture.md)
+[Contribute](CONTRIBUTING.md) · [How it works](docs/architecture.md) · [Changelog](CHANGELOG.md)
 
 The original Lemonade Tycoon game on the web and iOS, sharing one translated C
 engine and the original game resources. Each port supplies graphics, sound, input,

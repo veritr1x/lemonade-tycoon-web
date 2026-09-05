@@ -89,9 +89,8 @@ void lemon_audio_stop(void) {
 @property(nonatomic, strong) UIButton *restart;
 @property(nonatomic) BOOL running;
 @property(nonatomic, strong) UIStackView *toolbar;
-@property(nonatomic, strong) UIView *toolbarSpacer;
 @property(nonatomic, strong) UIButton *pauseButton, *soundButton, *layoutButton;
-@property(nonatomic, strong) UILabel *titleLabel;
+@property(nonatomic, strong) NSArray<NSLayoutConstraint *> *portraitConstraints, *wideConstraints;
 - (void)refreshHostActivity;
 @end
 static __weak LemonController *controller;
@@ -220,7 +219,10 @@ static int presentDialog(const char *title, const char *body, int trial, char *n
   button.accessibilityLabel = label;
   button.toolTip = label;
   [button.widthAnchor constraintEqualToConstant:48].active = YES;
-  [button.heightAnchor constraintGreaterThanOrEqualToConstant:48].active = YES;
+  NSLayoutConstraint *height = [button.heightAnchor constraintGreaterThanOrEqualToConstant:48];
+  // A hidden stack item gets zero height in the vertical widescreen toolbar.
+  height.priority = 999;
+  height.active = YES;
   [button addTarget:self action:action forControlEvents:UIControlEventTouchUpInside];
   return button;
 }
@@ -236,7 +238,6 @@ static int presentDialog(const char *title, const char *body, int trial, char *n
   UIButtonConfiguration *style = self.pauseButton.configuration;
   style.image = [UIImage systemImageNamed:userPaused ? @"play.fill" : @"pause.fill"];
   self.pauseButton.configuration = style;
-  self.titleLabel.text = userPaused ? @"Game paused" : @"Lemonade Tycoon";
 }
 - (void)togglePause {
   [self.game cancelGameTouch];
@@ -266,10 +267,23 @@ static int presentDialog(const char *title, const char *body, int trial, char *n
   UIAccessibilityPostNotification(UIAccessibilityAnnouncementNotification,
                                   classic ? @"Full game layout" : @"Portrait panels enabled");
 }
-- (void)viewDidLayoutSubviews {
-  [super viewDidLayoutSubviews];
-  BOOL portrait = self.view.bounds.size.height > self.view.bounds.size.width;
-  BOOL panels = portrait && ![NSUserDefaults.standardUserDefaults boolForKey:@"classicLayout"];
+- (void)viewWillLayoutSubviews {
+  [super viewWillLayoutSubviews];
+  [self updateGameLayout];
+}
+- (void)updateGameLayout {
+  BOOL wide = self.view.bounds.size.width > self.view.bounds.size.height;
+  NSArray *active = wide ? self.wideConstraints : self.portraitConstraints;
+  NSArray *inactive = wide ? self.portraitConstraints : self.wideConstraints;
+  if (!((NSLayoutConstraint *)active.firstObject).active) {
+    [NSLayoutConstraint deactivateConstraints:inactive];
+    // No title or text-size-dependent header competes with the game. Portrait
+    // gets one compact row; widescreen gets a narrow rail beside the full frame.
+    self.toolbar.axis = wide ? UILayoutConstraintAxisVertical : UILayoutConstraintAxisHorizontal;
+    self.layoutButton.hidden = wide;
+    [NSLayoutConstraint activateConstraints:active];
+  }
+  BOOL panels = !wide && ![NSUserDefaults.standardUserDefaults boolForKey:@"classicLayout"];
   if (self.game.portraitPanels != panels)
     self.game.portraitPanels = panels;
   self.layoutButton.accessibilityLabel = panels ? @"Show full game only" : @"Use portrait panels";
@@ -283,15 +297,6 @@ static int presentDialog(const char *title, const char *body, int trial, char *n
   self.game = [[LemonView alloc] initWithFrame:self.view.bounds];
   self.game.translatesAutoresizingMaskIntoConstraints = NO;
   [self.view addSubview:self.game];
-  self.titleLabel = [UILabel new];
-  self.titleLabel.text = @"Lemonade Tycoon";
-  self.titleLabel.textColor = UIColor.whiteColor;
-  self.titleLabel.font = [UIFont preferredFontForTextStyle:UIFontTextStyleHeadline];
-  self.titleLabel.adjustsFontForContentSizeCategory = YES;
-  self.titleLabel.numberOfLines = 0;
-  self.titleLabel.accessibilityTraits = UIAccessibilityTraitHeader;
-  [self.titleLabel setContentCompressionResistancePriority:UILayoutPriorityDefaultLow
-                                                   forAxis:UILayoutConstraintAxisHorizontal];
   self.soundButton = [self button:userMuted ? @"speaker.slash.fill" : @"speaker.wave.2.fill"
                             label:userMuted ? @"Unmute sound" : @"Mute sound"
                            action:@selector(toggleSound)];
@@ -299,30 +304,31 @@ static int presentDialog(const char *title, const char *body, int trial, char *n
   self.layoutButton = [self button:@"rectangle.split.1x2"
                              label:@"Change layout"
                             action:@selector(toggleLayout)];
-  self.toolbarSpacer = [UIView new];
-  UIStackView *controls = [[UIStackView alloc] initWithArrangedSubviews:@[
-    self.soundButton, self.pauseButton, self.layoutButton, self.toolbarSpacer
-  ]];
-  controls.spacing = 8;
-  self.toolbar = [[UIStackView alloc] initWithArrangedSubviews:@[ self.titleLabel, controls ]];
+  self.toolbar = [[UIStackView alloc]
+      initWithArrangedSubviews:@[ self.soundButton, self.pauseButton, self.layoutButton ]];
+  self.toolbar.alignment = UIStackViewAlignmentCenter;
   self.toolbar.spacing = 8;
   self.toolbar.translatesAutoresizingMaskIntoConstraints = NO;
   [self.view addSubview:self.toolbar];
   UILayoutGuide *safe = self.view.safeAreaLayoutGuide;
   [NSLayoutConstraint activateConstraints:@[
-    [self.toolbar.topAnchor constraintEqualToAnchor:safe.topAnchor constant:8],
-    [self.toolbar.leadingAnchor constraintEqualToAnchor:safe.leadingAnchor constant:12],
-    [self.toolbar.trailingAnchor constraintEqualToAnchor:safe.trailingAnchor constant:-12],
-    [self.game.topAnchor constraintEqualToAnchor:self.toolbar.bottomAnchor constant:8],
     [self.game.leadingAnchor constraintEqualToAnchor:safe.leadingAnchor],
-    [self.game.trailingAnchor constraintEqualToAnchor:safe.trailingAnchor],
-    [self.game.bottomAnchor constraintEqualToAnchor:self.view.keyboardLayoutGuide.topAnchor]
+    [self.game.bottomAnchor constraintEqualToAnchor:self.view.keyboardLayoutGuide.topAnchor],
+    [self.toolbar.trailingAnchor constraintEqualToAnchor:safe.trailingAnchor constant:-8]
   ]];
-  [self updateToolbarLayout];
-  [NSNotificationCenter.defaultCenter addObserver:self
-                                         selector:@selector(updateToolbarLayout)
-                                             name:UIContentSizeCategoryDidChangeNotification
-                                           object:nil];
+  self.portraitConstraints = @[
+    [self.toolbar.topAnchor constraintEqualToAnchor:safe.topAnchor constant:4],
+    [self.toolbar.heightAnchor constraintEqualToConstant:48],
+    [self.game.topAnchor constraintEqualToAnchor:self.toolbar.bottomAnchor constant:4],
+    [self.game.trailingAnchor constraintEqualToAnchor:safe.trailingAnchor]
+  ];
+  self.wideConstraints = @[
+    [self.toolbar.centerYAnchor constraintEqualToAnchor:self.game.centerYAnchor],
+    [self.toolbar.widthAnchor constraintEqualToConstant:48],
+    [self.game.topAnchor constraintEqualToAnchor:safe.topAnchor],
+    [self.game.trailingAnchor constraintEqualToAnchor:self.toolbar.leadingAnchor constant:-8]
+  ];
+  [self updateGameLayout];
   self.status = [UILabel new];
   self.status.translatesAutoresizingMaskIntoConstraints = NO;
   self.status.textColor = UIColor.whiteColor;
@@ -350,17 +356,6 @@ static int presentDialog(const char *title, const char *body, int trial, char *n
     [self.restart.widthAnchor constraintGreaterThanOrEqualToConstant:120]
   ]];
   [self startGame];
-}
-- (void)updateToolbarLayout {
-  // Give large text its own row instead of squeezing it between fixed buttons.
-  BOOL large = UIContentSizeCategoryIsAccessibilityCategory(
-      self.traitCollection.preferredContentSizeCategory);
-  self.toolbar.axis = large ? UILayoutConstraintAxisVertical : UILayoutConstraintAxisHorizontal;
-  self.toolbar.alignment = large ? UIStackViewAlignmentFill : UIStackViewAlignmentCenter;
-  self.toolbarSpacer.hidden = !large;
-}
-- (void)dealloc {
-  [NSNotificationCenter.defaultCenter removeObserver:self];
 }
 - (void)startGame {
   // One engine run owns its guest memory. Clean shutdown permits another run with saved data.

@@ -6,9 +6,14 @@ static void near(CGFloat a, CGFloat b) { assert(fabs(a - b) < .001); }
 int main(void) {
   CGRect sources[] = {CGRectMake(0, 0, 640, 480), lemon_column_source(false),
                       lemon_column_source(true)};
-  CGRect screens[] = {{12, 80, 369, 640}, {0, 0, 1024, 680}, {8, 20, 300, 180}};
+  CGRect screens[] = {{12, 80, 369, 640},
+                      {0, 0, 1024, 680},
+                      {8, 20, 300, 180},
+                      {0, 0, 852, 393},
+                      {0, 0, 1080, 440}};
+  unsigned screenCount = sizeof(screens) / sizeof(screens[0]);
   for (unsigned i = 0; i < 3; i++) {
-    for (unsigned j = 0; j < 3; j++) {
+    for (unsigned j = 0; j < screenCount; j++) {
       CGRect fit = lemon_fit(sources[i], screens[j]);
       assert(CGRectContainsRect(screens[j], fit));
       CGPoint middle =
@@ -23,7 +28,7 @@ int main(void) {
   }
   // The screen's upper half must map to the right column, and its lower half
   // to the left. Include the original top/bottom edges so no buttons are lost.
-  for (unsigned i = 0; i < 3; i++) {
+  for (unsigned i = 0; i < screenCount; i++) {
     CGRect topSpace = lemon_pane_space(screens[i], false);
     CGRect bottomSpace = lemon_pane_space(screens[i], true);
     near(topSpace.size.height, bottomSpace.size.height);

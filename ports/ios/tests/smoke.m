@@ -83,6 +83,8 @@ static void checkHostControls(void) {
 static void startChecks(void) {
   require(testGame.frameImage != nil, @"Original game renders");
   require(testGame.portraitPanels, @"Portrait panes active");
+  UIStackView *toolbar = [testWindow.rootViewController valueForKey:@"toolbar"];
+  require(toolbar.bounds.size.height <= 48.01, @"Portrait toolbar stays within one 48-point row");
   CGRect top = [[testGame valueForKey:@"topSource"] CGRectValue];
   CGRect bottom = [[testGame valueForKey:@"bottomSource"] CGRectValue];
   require(CGRectEqualToRect(top, CGRectMake(320, 0, 320, 480)),

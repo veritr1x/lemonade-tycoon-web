@@ -11,13 +11,20 @@ Portrait stacks the original **right column on top** and **left column below** i
 equal-height panes. Both columns stay visible and interactive, including their top
 status bars and bottom game buttons. Images keep their original proportions, with
 space at the sides when needed. The layout button returns to a single full-game
-view for comparison or wide menus; landscape always uses that view. Both panes
+view for comparison or wide menus. Both panes
 send input to the same running game, so changing layout preserves progress.
 While typing, the pane containing the active field brings it into view above the
 docked keyboard. Tapping outside dismisses the keyboard and restores both columns.
 
-The native toolbar provides pause/resume, sound, and layout controls with VoiceOver
-labels, large touch targets, and Dynamic Type for interface text. The original
+Landscape/widescreen shows the original columns side by side. Sound and pause
+controls move into a narrow rail on the right, leaving the full available height
+for the game. Rotation changes the presentation without restarting the game.
+The original image keeps its 4:3 proportions; this does not extend the game world
+or stretch its artwork to 16:9.
+
+The compact native toolbar provides pause/resume, sound, and portrait layout controls
+with VoiceOver labels and 48-point touch targets. It has no large title, including
+at accessibility text sizes. Loading and restart text use Dynamic Type. The original
 bitmap game menus are not yet independently accessible to VoiceOver, and their text
 does not follow Dynamic Type. Native recipe/supplies forms remain future work.
 
@@ -92,6 +99,8 @@ xcrun simctl launch --console booted local.lemonade.tycoon.smoketest
 
 The test app uses synthesized UIKit touch calls to exercise pane mapping, character
 entry, outside dismissal, reopening, Return, touch release, pause/resume, and layout
-switching. It writes `smoke.json` and screenshots to its own Documents directory.
+switching, including the compact toolbar height. It writes `smoke.json` and screenshots
+to its own Documents directory. Also rotate the simulator into both landscape
+directions, use a recipe button, and return to portrait to check layout and progress.
 These checks do not replace physical touch, VoiceOver, or software-keyboard testing.
 The smoke-test code is excluded from normal builds and cannot target a device.

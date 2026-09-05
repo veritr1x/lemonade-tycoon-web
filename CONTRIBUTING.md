@@ -75,5 +75,10 @@ decision, and what you tested. Include a screenshot for layout changes and a sma
 regression test for a behavior fix when practical. The Pages workflow builds pull
 requests without deploying them; only `main` publishes the live game.
 
+Add user-visible changes to [CHANGELOG.md](CHANGELOG.md) under **Unreleased**, grouped
+by the affected port or shared engine. Describe what a player or contributor can
+now do. When publishing, move those notes into a dated entry and include the iOS
+build number when applicable. Keep fixes and known limitations accurate.
+
 Avoid committing SDKs, generated browser builds, test logs, or save files. A clean
 checkout must remain buildable using the checked-in inputs and documented commands.
