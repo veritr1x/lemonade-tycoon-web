@@ -379,7 +379,7 @@ def lift(i, page):
     return f"fault(c,0x{i.address:x});return 0;"
 
 
-out = Path("native/generated")
+out = Path("engine/generated")
 out.mkdir(exist_ok=True)
 pages = collections.defaultdict(list)
 for i in instructions.values():

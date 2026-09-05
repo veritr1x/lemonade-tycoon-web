@@ -8,7 +8,7 @@ error. Describe expected and actual behavior without attaching personal browser 
 ## Edit the browser interface
 
 Follow the one-command setup in [README.md](README.md#make-your-first-change).
-`web/app.js` is the entry point. Its comments explain canvas scaling, input focus,
+`ports/web/app.js` is the entry point. Its comments explain canvas scaling, input focus,
 sound scheduling, and storage. Changes appear after a page reload.
 
 ## Build the engine
@@ -20,13 +20,18 @@ git clone https://github.com/emscripten-core/emsdk.git .tools/emsdk
 python3 .tools/emsdk/emsdk.py install 6.0.9
 python3 .tools/emsdk/emsdk.py activate 6.0.9
 source .tools/emsdk/emsdk_env.sh
-python3 tools/build.py
+python3 tools/build.py --port web
 python3 tools/serve.py
 ```
 
 The source build writes a self-contained static site to `build/site/` and caches
 objects in `build/wasm/`. Reduce parallelism with `--jobs 2` on smaller machines.
 The game allocates about 320 MiB of initial WebAssembly memory.
+
+For the UIKit port, use `python3 tools/build.py --port ios` on macOS with Xcode.
+See [iOS setup](ports/ios/README.md) for simulator installation and device signing.
+Use `--port-help` to see options for either builder. New platforms follow the
+same source, build, and validation conventions in [Adding a port](docs/adding-a-port.md).
 
 ## Check your change
 
@@ -47,18 +52,18 @@ Optional formatting and translation tools:
 python3 -m venv .venv
 source .venv/bin/activate
 pip install -r requirements-dev.txt
-black tools native/tests/differential.py
-clang-format -i native/*.c native/*.h native/web/*.c native/tests/*.c
-npx --yes prettier@3.9.6 --write web/*.js web/*.css web/*.html '*.md' docs/*.md
+black tools engine/tests/differential.py
+clang-format -i engine/*.c engine/*.h ports/web/*.c ports/ios/*.m engine/tests/*.c
+npx --yes prettier@3.9.6 --write ports/web/*.js ports/web/*.css ports/web/*.html '*.md' docs/*.md
 ```
 
-Do not format or hand-edit `native/generated/`. See its [README](native/generated/README.md)
+Do not format or hand-edit `engine/generated/`. See its [README](engine/generated/README.md)
 before changing instruction translation. The optional differential test compares
 the translated routines against the original x86 routines using Unicorn:
 
 ```sh
 python3 tools/test.py --integration
-python3 native/tests/differential.py
+python3 engine/tests/differential.py
 ```
 
 ## Submit a pull request

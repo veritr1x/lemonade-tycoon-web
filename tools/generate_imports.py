@@ -33,4 +33,4 @@ lines += (
     + patch
     + ["}"]
 )
-Path("native/generated/imports.h").write_text("\n".join(lines) + "\n")
+Path("engine/generated/imports.h").write_text("\n".join(lines) + "\n")

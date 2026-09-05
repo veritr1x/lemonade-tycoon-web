@@ -9,7 +9,7 @@ From the repository root, with the development requirements installed:
 ```sh
 python3 tools/lift_game.py
 python3 tools/generate_imports.py
-git diff -- native/generated
+git diff -- engine/generated
 ```
 
 The inputs are `assets/cold-memory.bin`, `assets/entry-points.json`, and

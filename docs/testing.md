@@ -27,6 +27,6 @@ AddressSanitizer/UndefinedBehaviorSanitizer.
 
 `--integration` adds original configuration checks, URL handling, and three complete
 startup/main-menu/quit/CRT-exit sessions in one native process. The optional
-`native/tests/differential.py` compares translated original routines against Unicorn.
+`engine/tests/differential.py` compares translated original routines against Unicorn.
 The WebAssembly build also validates its output with V8. These checks complement
 browser playthroughs; they do not establish full game parity.

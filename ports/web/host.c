@@ -3,7 +3,7 @@
  * queue remain internal implementation details instead of a second public API.
  */
 #include <emscripten.h>
-#include "../platform.c"
+#include "../../engine/platform.c"
 
 static const uint32_t GAME_ENTRY = 0x44fb6b; /* Original CRT startup. */
 static const uint32_t RETURN_SENTINEL = 0xeeeeeeee;
@@ -11,7 +11,7 @@ static CPU web_cpu;
 static uint32_t web_pc;
 static int web_running, web_active = 1;
 
-/* EM_JS bodies run in JavaScript. web/app.js owns DOM, audio, and persistence.
+/* EM_JS bodies run in JavaScript. ports/web/app.js owns DOM, audio, and persistence.
  * Mask each color byte before storing into a clamped array; high bits would
  * otherwise turn the green/blue components white.
  */

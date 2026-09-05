@@ -1,148 +1,23 @@
-"""Build the static browser app. Requires Emscripten 6.0.9 on PATH."""
+"""Build a port: python3 tools/build.py --port web|ios [port options]."""
 
 import argparse
-import concurrent.futures
-import hashlib
-import json
-import os
 from pathlib import Path
-import shutil
 import subprocess
+import sys
 
-ROOT = Path(__file__).resolve().parent.parent
-VERSION = "6.0.9"
-SHELL_FILES = ("index.html", "app.js", "style.css")
-RUNTIME_FILES = ("lemonade.js", "lemonade.wasm", "lemonade.data")
-
-
-def sha256(path):
-    return hashlib.sha256(path.read_bytes()).hexdigest()
-
-
-def build(jobs):
-    os.chdir(ROOT)
-    emcc = os.environ.get("EMCC") or shutil.which("emcc")
-    if not emcc:
-        raise SystemExit(
-            "emcc not found. Activate Emscripten 6.0.9; see CONTRIBUTING.md."
-        )
-    compiler = subprocess.check_output([emcc, "--version"], text=True)
-    if VERSION not in compiler.splitlines()[0]:
-        raise SystemExit(
-            f"Expected Emscripten {VERSION}; found {compiler.splitlines()[0]}"
-        )
-
-    output = ROOT / "build/site"
-    objects = ROOT / "build/wasm"
-    output.mkdir(parents=True, exist_ok=True)
-    objects.mkdir(parents=True, exist_ok=True)
-    sources = [
-        Path("native/runtime.c"),
-        Path("native/audio.c"),
-        Path("native/lifecycle.c"),
-        *sorted(Path("native/generated").glob("*.c")),
-        # host.c includes platform.c so it can drive the shared engine lifecycle.
-        Path("native/web/host.c"),
-    ]
-    flags = ["-O2", "-DLEMON_WEB", "-Wno-tautological-constant-out-of-range-compare"]
-    headers = b"".join(p.read_bytes() for p in sorted(Path("native").rglob("*.h")))
-    headers += Path("native/platform.c").read_bytes()
-    cache_inputs = headers + compiler.encode() + repr(flags).encode()
-
-    def compile_source(source):
-        obj = objects / (source.stem + ".o")
-        stamp = obj.with_suffix(".sha256")
-        digest = hashlib.sha256(source.read_bytes() + cache_inputs).hexdigest()
-        if obj.exists() and stamp.exists() and stamp.read_text() == digest:
-            return obj
-        result = subprocess.run(
-            [emcc, *flags, "-std=gnu11", "-c", str(source), "-o", str(obj)],
-            capture_output=True,
-            text=True,
-        )
-        if result.returncode:
-            raise RuntimeError(f"{source}\n{result.stderr}")
-        stamp.write_text(digest)
-        return obj
-
-    with concurrent.futures.ThreadPoolExecutor(max_workers=jobs) as pool:
-        built = []
-        for index, obj in enumerate(pool.map(compile_source, sources), 1):
-            built.append(obj)
-            if index % 10 == 0:
-                print(f"Compiled {index}/{len(sources)} units", flush=True)
-
-    exports = [
-        "_lemon_web_start",
-        "_lemon_web_step",
-        "_lemon_web_active",
-        "_lemon_web_flush_input",
-        "_lemon_web_audio",
-        "_lemon_touch",
-        "_lemon_key",
-    ]
-    subprocess.run(
-        [
-            emcc,
-            *flags,
-            *map(str, built),
-            "--no-entry",
-            # Unbounded single-caller inlining creates a 14 MB function Chrome rejects.
-            "-sBINARYEN_EXTRA_PASSES=--one-caller-inline-max-function-size=1000",
-            "-sMODULARIZE=1",
-            "-sEXPORT_ES6=1",
-            "-sEXPORT_NAME=createLemonade",
-            "-sENVIRONMENT=web",
-            "-sALLOW_MEMORY_GROWTH=1",
-            "-sINITIAL_MEMORY=335544320",
-            "-sSTACK_SIZE=2097152",
-            "-sEXPORTED_FUNCTIONS=" + json.dumps(exports),
-            '-sEXPORTED_RUNTIME_METHODS=["FS","IDBFS"]',
-            "-lidbfs.js",
-            "--preload-file",
-            "assets/cold-memory.bin@/cold-memory.bin",
-            "--preload-file",
-            "assets/Lemonade.RB@/Game/Lemonade.RB",
-            "-o",
-            str(output / "lemonade.js"),
-        ],
-        check=True,
-    )
-
-    # Validate before uploading a site that browsers cannot instantiate.
-    node = os.environ.get("EMSDK_NODE") or shutil.which("node")
-    if not node:
-        raise SystemExit("Node is needed to validate the module (included in emsdk).")
-    subprocess.run(
-        [
-            node,
-            "-e",
-            "const fs=require('fs');new WebAssembly.Module(fs.readFileSync(process.argv[1]));"
-            "console.log('WebAssembly validation passed');",
-            str(output / "lemonade.wasm"),
-        ],
-        check=True,
-    )
-    for name in SHELL_FILES:
-        shutil.copy2(ROOT / "web" / name, output / name)
-    (output / ".nojekyll").touch()
-    # Contributors can download these verified runtime files for shell-only edits.
-    revision = subprocess.run(
-        ["git", "rev-parse", "HEAD"], capture_output=True, text=True
-    )
-    manifest = {
-        "revision": revision.stdout.strip() or "local",
-        "emscripten": VERSION,
-        "files": {name: sha256(output / name) for name in RUNTIME_FILES},
-    }
-    (output / "build.json").write_text(json.dumps(manifest, indent=2) + "\n")
-    print(f"Built {output}")
-
+# Register new ports here; each builder owns its toolchain and ignored output.
+BUILDERS = {"web": "build_web.py", "ios": "build_ios.py"}
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("--jobs", type=int, default=min(6, os.cpu_count() or 2))
-    args = parser.parse_args()
-    if args.jobs < 1:
-        parser.error("--jobs must be positive")
-    build(args.jobs)
+    parser.add_argument("--port", choices=BUILDERS, default="web")
+    parser.add_argument(
+        "--port-help", action="store_true", help="Show the selected builder's options"
+    )
+    args, options = parser.parse_known_args()
+    builder = Path(__file__).resolve().with_name(BUILDERS[args.port])
+    raise SystemExit(
+        subprocess.call(
+            [sys.executable, str(builder), *(["--help"] if args.port_help else options)]
+        )
+    )

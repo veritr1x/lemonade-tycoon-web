@@ -27,7 +27,7 @@ jobs:
       - name: Test the shared runtime
         run: python3 tools/test.py
       - name: Build and validate WebAssembly
-        run: python3 tools/build.py --jobs 2
+        run: python3 tools/build.py --port web --jobs 2
       # Pull requests build and test but cannot publish the production site.
       - name: Upload the static site
         if: github.ref == 'refs/heads/main' && github.event_name != 'pull_request'

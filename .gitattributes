@@ -1,5 +1,5 @@
 * text=auto
-native/generated/** linguist-generated=true
+engine/generated/** linguist-generated=true
 assets/** linguist-vendored=true
 *.bin binary
 *.RB binary

@@ -55,12 +55,12 @@ def integration(compiler):
     objects = ROOT / "build/native"
     objects.mkdir(parents=True, exist_ok=True)
     sources = [
-        Path("native/runtime.c"),
-        Path("native/audio.c"),
-        Path("native/lifecycle.c"),
-        *sorted(Path("native/generated").glob("*.c")),
+        Path("engine/runtime.c"),
+        Path("engine/audio.c"),
+        Path("engine/lifecycle.c"),
+        *sorted(Path("engine/generated").glob("*.c")),
     ]
-    headers = b"".join(p.read_bytes() for p in sorted(Path("native").rglob("*.h")))
+    headers = b"".join(p.read_bytes() for p in sorted(Path("engine").rglob("*.h")))
     compiler_version = subprocess.check_output([compiler, "--version"])
 
     def compile_source(source):
@@ -94,7 +94,7 @@ def integration(compiler):
         built = list(pool.map(compile_source, sources))
     for name in ("configuration", "urls", "restart"):
         run_test(
-            compiler, name, [Path(f"native/tests/{name}.c"), *built], sanitize=False
+            compiler, name, [Path(f"engine/tests/{name}.c"), *built], sanitize=False
         )
     # This shared library is also the native side of the optional Unicorn oracle.
     mac = platform.system() == "Darwin"
@@ -123,12 +123,12 @@ if __name__ == "__main__":
     if not compiler:
         parser.error("Install Clang or set CC to a compatible C compiler.")
     cases = {
-        "audio": ["native/audio.c"],
-        "lifecycle": ["native/lifecycle.c"],
-        "runtime_exit": ["native/runtime.c"],
-        "platform": ["native/audio.c", "native/lifecycle.c"],
+        "audio": ["engine/audio.c"],
+        "lifecycle": ["engine/lifecycle.c"],
+        "runtime_exit": ["engine/runtime.c"],
+        "platform": ["engine/audio.c", "engine/lifecycle.c"],
     }
     for name, sources in cases.items():
-        run_test(compiler, name, [f"native/tests/{name}.c", *sources])
+        run_test(compiler, name, [f"engine/tests/{name}.c", *sources])
     if args.integration:
         integration(compiler)

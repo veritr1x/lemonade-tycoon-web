@@ -43,7 +43,7 @@ class Handler(SimpleHTTPRequestHandler):
     def translate_path(self, path):
         name = unquote(urlsplit(path).path).lstrip("/") or "index.html"
         if name in SHELL:
-            return str(ROOT / "web" / name)
+            return str(ROOT / "ports/web" / name)
         if name in (*RUNTIME, "build.json"):
             return str(SITE / name)
         return str(SITE / "__not_found__")
@@ -62,7 +62,9 @@ if __name__ == "__main__":
         download_runtime()
     if not all((SITE / name).is_file() for name in RUNTIME):
         parser.error("Build with tools/build.py or pass --download-runtime first.")
-    print(f"Open http://127.0.0.1:{args.port}/ — edit web/ and reload", flush=True)
+    print(
+        f"Open http://127.0.0.1:{args.port}/ — edit ports/web/ and reload", flush=True
+    )
     try:
         ThreadingHTTPServer(("127.0.0.1", args.port), Handler).serve_forever()
     except KeyboardInterrupt:

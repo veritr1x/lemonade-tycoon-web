@@ -5,3 +5,20 @@
 __pycache__/
 *.pyc
 .DS_Store
+
+# Native build products and local signing material never belong in the repository.
+*.[iI][pP][aA]
+*.app/
+*.xcarchive/
+*.dSYM/
+DerivedData/
+*.mobileprovision
+*.provisionprofile
+*.p12
+*.pfx
+*.cer
+*.key
+*.pem
+*.xcuserstate
+xcuserdata/
+/ports/ios/build*/

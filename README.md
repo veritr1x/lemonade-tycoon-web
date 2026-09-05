@@ -1,11 +1,19 @@
-# Lemonade Tycoon Web
+# Lemonade Tycoon Ports
 
 [Play in your browser](https://veritr1x.github.io/lemonade-tycoon-web/) ·
 [Contribute](CONTRIBUTING.md) · [How it works](docs/architecture.md)
 
-The original Lemonade Tycoon game running in a browser. Its translated C engine
-compiles to WebAssembly and draws the original game graphics on a canvas.
-The browser provides sound, touch/mouse input, text entry, and local saves.
+The original Lemonade Tycoon game on the web and iOS, sharing one translated C
+engine and the original game resources. Each port supplies graphics, sound, input,
+and storage through a small host adapter.
+
+| Port | Build                               | Run                                                            |
+| ---- | ----------------------------------- | -------------------------------------------------------------- |
+| Web  | `python3 tools/build.py --port web` | [Play online](https://veritr1x.github.io/lemonade-tycoon-web/) |
+| iOS  | `python3 tools/build.py --port ios` | [Simulator and device setup](ports/ios/README.md)              |
+
+See [Contributing](CONTRIBUTING.md) for toolchain requirements. The default build
+remains the web port. The repository URL stays the same so existing Pages links work.
 
 ## Play
 
@@ -26,7 +34,7 @@ cd lemonade-tycoon-web
 python3 tools/serve.py --download-runtime
 ```
 
-Open <http://127.0.0.1:8000/>, edit files in `web/`, and reload. The command downloads
+Open <http://127.0.0.1:8000/>, edit files in `ports/web/`, and reload. The command downloads
 the published runtime once into the ignored `build/` directory. Later runs can
 omit `--download-runtime`. For C changes, see the [build instructions](CONTRIBUTING.md#build-the-engine).
 
@@ -34,15 +42,18 @@ omit `--download-runtime`. For C changes, see the [build instructions](CONTRIBUT
 
 | Path                | Purpose                                                        |
 | ------------------- | -------------------------------------------------------------- |
-| `web/`              | Page, styling, input, audio scheduling, and browser storage    |
-| `native/web/host.c` | Bridge between the game engine and browser callbacks           |
-| `native/`           | Handwritten runtime, Windows API adapter, PCM mixer, and tests |
-| `native/generated/` | Generated original-game code; change its generator instead     |
+| `ports/web/`        | Page, styling, input, audio scheduling, and browser storage    |
+| `ports/web/host.c`  | Bridge between the game engine and browser callbacks           |
+| `ports/ios/`        | UIKit display/input, AVAudioEngine, and app lifecycle          |
+| `engine/`           | Handwritten runtime, Windows API adapter, PCM mixer, and tests |
+| `engine/generated/` | Generated original-game code; change its generator instead     |
 | `tools/`            | Build, local server, tests, and code generation                |
 | `assets/`           | Game resources and reproducible translation inputs             |
 
-GitHub Actions tests and builds pull requests. Changes merged to `main` also
-publish to GitHub Pages. Build products and SDKs stay out of Git history.
+GitHub Actions tests the shared runtime and builds the web and iOS ports. Changes
+merged to `main` publish the web port to GitHub Pages. iOS CI verifies a simulator
+build without uploading an app or IPA. Build products and SDKs stay out of Git history.
+To add another platform, follow [Adding a port](docs/adding-a-port.md).
 
 ## Status
 

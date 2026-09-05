@@ -1,0 +1,19 @@
+name: Build iOS
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  simulator:
+    runs-on: macos-15
+    steps:
+      - uses: actions/checkout@v7.0.1
+      - name: Build and verify the simulator app
+        run: python3 tools/build.py --port ios --jobs 3
+      # App bundles, signing material, and IPA archives are never uploaded.
