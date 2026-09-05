@@ -4,6 +4,7 @@ and notices. The in-game credits are preserved.
 
 assets/Lemonade.RB contains the original resource bundle.
 assets/cold-memory.bin contains the original program image used at startup.
+ports/ios/Assets.xcassets/AppIcon.appiconset/AppIcon.png uses the original executable's lemon icon.
 engine/generated contains C translated from original program instructions.
 These original-game materials are not covered by the port implementation's MIT license.
 

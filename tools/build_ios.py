@@ -144,6 +144,29 @@ subprocess.run(
     check=True,
 )
 # Construct a minimal app bundle directly; no generated Xcode project is needed.
+icon_info = output / "asset-info.plist"
+subprocess.run(
+    [
+        "xcrun",
+        "actool",
+        "ports/ios/Assets.xcassets",
+        "--compile",
+        str(app),
+        "--platform",
+        sdk_name,
+        "--minimum-deployment-target",
+        "17.0",
+        "--target-device",
+        "iphone",
+        "--target-device",
+        "ipad",
+        "--app-icon",
+        "AppIcon",
+        "--output-partial-info-plist",
+        str(icon_info),
+    ],
+    check=True,
+)
 info = dict(
     CFBundleDevelopmentRegion="en",
     CFBundleIdentifier=bundle_id,
@@ -151,7 +174,7 @@ info = dict(
     CFBundleDisplayName="Lemonade Tycoon",
     CFBundleExecutable="LemonadeTycoon",
     CFBundlePackageType="APPL",
-    CFBundleVersion="5",
+    CFBundleVersion="6",
     CFBundleShortVersionString="0.1",
     MinimumOSVersion="17.0",
     UIDeviceFamily=[1, 2],
@@ -164,6 +187,7 @@ info = dict(
     UIStatusBarHidden=True,
     CFBundleSupportedPlatforms=["iPhoneOS" if args.device else "iPhoneSimulator"],
 )
+info.update(plistlib.loads(icon_info.read_bytes()))
 (app / "Info.plist").write_bytes(plistlib.dumps(info))
 (app / "Game").mkdir(exist_ok=True)
 shutil.copy2("assets/cold-memory.bin", app / "cold-memory.bin")
